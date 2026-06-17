@@ -3,11 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="idrto — something new is on the way.">
-  <title>idrto — Coming Soon</title>
+  <meta name="description" content="idr.to is a hosted identity and signaling service for ID-based routing — secure peer connectivity across NAT with WebRTC.">
+  <title>idr.to — Hosted identity &amp; signaling</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,400&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -18,50 +18,228 @@
     <div class="grid"></div>
   </div>
 
-  <main class="page">
-    <header class="brand">
+  <header class="site-header">
+    <a class="brand" href="/">
       <span class="brand__mark" aria-hidden="true"></span>
-      <span class="brand__name">idrto</span>
-    </header>
+      <span class="brand__name">idr.to</span>
+    </a>
+    <nav class="nav" aria-label="Primary">
+      <a class="nav__link" href="#features">Features</a>
+      <a class="nav__link" href="#how-it-works">How it works</a>
+      <a class="nav__link" href="#pricing">Pricing</a>
+      <a class="nav__link" href="#get-started">Get started</a>
+    </nav>
+  </header>
 
-    <section class="hero">
-      <p class="hero__eyebrow">Coming soon</p>
-      <h1 class="hero__title">We're building<br><em>something worth the wait.</em></h1>
-      <p class="hero__lead">
-        A new space is taking shape. Check back soon — or leave your email and we'll let you know when we launch.
-      </p>
-
-      <form class="notify" action="#" method="post" onsubmit="return false;">
-        <label class="visually-hidden" for="email">Email address</label>
-        <input
-          class="notify__input"
-          type="email"
-          id="email"
-          name="email"
-          placeholder="you@example.com"
-          autocomplete="email"
-          required
-        >
-        <button class="notify__btn" type="submit">Notify me</button>
-      </form>
-      <p class="notify__hint" role="status" hidden>Thanks — we'll be in touch.</p>
+  <main>
+    <section class="hero section">
+      <div class="section__inner">
+        <p class="eyebrow">Hosted service</p>
+        <h1 class="hero__title">Identity and signaling for<br><em>devices behind NAT.</em></h1>
+        <p class="hero__lead">
+          idr.to implements <strong>ID-based routing (IDR)</strong> — DNS-like names, cryptographic device identity,
+          and policy-controlled access. The server handles registry and WebRTC signaling; your traffic stays
+          peer-to-peer whenever the network allows.
+        </p>
+        <div class="hero__actions">
+          <a class="btn btn--primary" href="#get-started">Install the CLI</a>
+          <a class="btn btn--ghost" href="#pricing">View pricing</a>
+        </div>
+      </div>
     </section>
 
-    <footer class="footer">
-      <p class="footer__copy">&copy; <span id="year"></span> idrto</p>
-    </footer>
+    <section class="section section--tight" aria-labelledby="pillars-heading">
+      <div class="section__inner">
+        <h2 id="pillars-heading" class="visually-hidden">Core capabilities</h2>
+        <ul class="pillars">
+          <li class="pillar">
+            <span class="pillar__icon" aria-hidden="true">01</span>
+            <h3 class="pillar__title">Stable addressing</h3>
+            <p class="pillar__text">Reach any host with a canonical URI like <code>idrto:example.com/laptop/22</code> or a synthetic <code>*.idr</code> hostname.</p>
+          </li>
+          <li class="pillar">
+            <span class="pillar__icon" aria-hidden="true">02</span>
+            <h3 class="pillar__title">Crypto identity</h3>
+            <p class="pillar__text">Each device gets a <strong>Device-ID</strong> derived from its Ed25519 key — no centrally assigned addresses.</p>
+          </li>
+          <li class="pillar">
+            <span class="pillar__icon" aria-hidden="true">03</span>
+            <h3 class="pillar__title">Policy before packets</h3>
+            <p class="pillar__text">Allowlist-based <strong>ACLs</strong> are evaluated at resolve time. Same-entity access works by default; cross-entity access requires explicit allows.</p>
+          </li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="features" class="section">
+      <div class="section__inner">
+        <div class="section__header">
+          <p class="eyebrow">Features</p>
+          <h2 class="section__title">Everything you need to connect fleets, APIs, and edge devices</h2>
+        </div>
+        <ul class="features">
+          <li class="feature">
+            <h3 class="feature__title">Identity registry</h3>
+            <p>Entities, device identities, and host-to-device mappings. Delegate subdomains with signed X.509 certificates — like DNS, but for connectivity.</p>
+          </li>
+          <li class="feature">
+            <h3 class="feature__title">WebRTC signaling</h3>
+            <p>Persistent WebSocket from target agents; ephemeral sessions for sources. SDP offers, answers, and ICE candidates relayed through <code>wss://idr.to/v1/signal</code>.</p>
+          </li>
+          <li class="feature">
+            <h3 class="feature__title">Transparent L4 tunnels</h3>
+            <p>Multiplexed <strong>idr-tunnel-v1</strong> over WebRTC data channels. SSH, Postgres, HTTP, and HTTPS work as raw TCP — no protocol termination.</p>
+          </li>
+          <li class="feature">
+            <h3 class="feature__title">STUN &amp; optional TURN</h3>
+            <p>STUN assists NAT traversal out of the box. Add TURN relay when strict firewalls or symmetric NAT block direct peer paths.</p>
+          </li>
+          <li class="feature">
+            <h3 class="feature__title">Agents &amp; CLI</h3>
+            <p>Run <strong>idr-agent</strong> in source, target, or hybrid mode. Manage entities, hosts, ACLs, and connections with the <strong>idr</strong> CLI.</p>
+          </li>
+          <li class="feature">
+            <h3 class="feature__title">Read-only portal</h3>
+            <p>Inspect certificates, delegations, host mappings, and ACLs in the web portal. Registry changes are made with the CLI.</p>
+          </li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="how-it-works" class="section section--alt">
+      <div class="section__inner">
+        <div class="section__header">
+          <p class="eyebrow">Architecture</p>
+          <h2 class="section__title">Control plane hosted. Data plane peer-to-peer.</h2>
+          <p class="section__lead">idr.to is the registry, policy engine, and signaling relay. Bytes flow over WebRTC between agents whenever possible.</p>
+        </div>
+        <div class="flow">
+          <div class="flow__node">
+            <span class="flow__label">Source agent</span>
+            <p>Resolves target, passes ACL checks, exchanges SDP/ICE via signaling.</p>
+          </div>
+          <div class="flow__arrow" aria-hidden="true">↔</div>
+          <div class="flow__node flow__node--accent">
+            <span class="flow__label">idr.to</span>
+            <p>Registry · resolve · ACLs · signaling · ICE credentials · billing.</p>
+          </div>
+          <div class="flow__arrow" aria-hidden="true">↔</div>
+          <div class="flow__node">
+            <span class="flow__label">Target agent</span>
+            <p>Maintains persistent WebSocket; dials local services on incoming tunnels.</p>
+          </div>
+        </div>
+        <p class="flow__note">When P2P fails, optional <strong>TURN relay</strong> carries media through <code>turn.idr.to</code>.</p>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section__inner">
+        <div class="section__header">
+          <p class="eyebrow">Addressing</p>
+          <h2 class="section__title">Names your tools already understand</h2>
+        </div>
+        <div class="examples">
+          <figure class="example">
+            <figcaption class="example__caption">Canonical URI</figcaption>
+            <pre class="code"><code>idrto:user@example.com/laptop/22</code></pre>
+          </figure>
+          <figure class="example">
+            <figcaption class="example__caption">HTTPS metadata</figcaption>
+            <pre class="code"><code>https://idr.to/user@example.com/laptop/22</code></pre>
+          </figure>
+          <figure class="example">
+            <figcaption class="example__caption">Synthetic hostname</figcaption>
+            <pre class="code"><code>laptop.user-40example-2Ecom.idr</code></pre>
+          </figure>
+          <figure class="example">
+            <figcaption class="example__caption">Connect with the CLI</figcaption>
+            <pre class="code"><code>idr connect idrto:example.com/laptop/22</code></pre>
+          </figure>
+        </div>
+      </div>
+    </section>
+
+    <section id="pricing" class="section section--alt">
+      <div class="section__inner">
+        <div class="section__header section__header--center">
+          <p class="eyebrow">Pricing</p>
+          <h2 class="section__title">Simple, predictable plans</h2>
+          <p class="section__lead">Signaling is required for every entity. Add relay capacity only when your network needs it.</p>
+        </div>
+        <div class="pricing">
+          <article class="price-card price-card--featured">
+            <header class="price-card__header">
+              <h3 class="price-card__name">Signaling</h3>
+              <p class="price-card__tag">Required</p>
+            </header>
+            <p class="price-card__amount"><span class="price-card__currency">US$</span>9<span class="price-card__cents">.99</span></p>
+            <p class="price-card__period">per entity, per annum</p>
+            <ul class="price-card__list">
+              <li>Identity registry &amp; host mappings</li>
+              <li>WebRTC signaling plane</li>
+              <li>Authenticated resolve &amp; ACL enforcement</li>
+              <li>STUN for NAT traversal</li>
+              <li>Metadata gateway</li>
+            </ul>
+          </article>
+          <article class="price-card">
+            <header class="price-card__header">
+              <h3 class="price-card__name">TURN &amp; relay</h3>
+              <p class="price-card__tag price-card__tag--muted">Optional add-on</p>
+            </header>
+            <p class="price-card__amount"><span class="price-card__currency">US$</span>5</p>
+            <p class="price-card__period">per 500&nbsp;GB / month <span class="price-card__period-note">(sold in multiples)</span></p>
+            <ul class="price-card__list">
+              <li>TURN media relay via <code>turn.idr.to</code></li>
+              <li>For strict NATs and firewalls where P2P fails</li>
+              <li>Stack units: 500&nbsp;GB, 1&nbsp;TB, 1.5&nbsp;TB…</li>
+              <li>Billing-gated credential attestation</li>
+            </ul>
+          </article>
+        </div>
+        <p class="pricing__footnote">All prices in US dollars. Signaling covers one entity (e.g. <code>example.com</code> or <code>user@example.com</code>). Relay quotas apply per entity and reset monthly.</p>
+      </div>
+    </section>
+
+    <section id="get-started" class="section">
+      <div class="section__inner">
+        <div class="section__header">
+          <p class="eyebrow">Get started</p>
+          <h2 class="section__title">Install the agent and register your first device</h2>
+        </div>
+        <ol class="steps">
+          <li class="step">
+            <h3 class="step__title">Install</h3>
+            <pre class="code code--block"><code>curl -fsSL https://download.idr.to/install.sh | bash</code></pre>
+            <p>Also available via Homebrew, winget, apt, rpm, Chocolatey, and Scoop.</p>
+          </li>
+          <li class="step">
+            <h3 class="step__title">Authenticate &amp; register</h3>
+            <pre class="code code--block"><code>idr auth login
+idr device register
+idr agent run</code></pre>
+          </li>
+          <li class="step">
+            <h3 class="step__title">Connect</h3>
+            <pre class="code code--block"><code>idr connect idrto:example.com/laptop/22</code></pre>
+            <p>Or use synthetic <code>*.idr</code> hostnames with SSH, Postgres, and curl.</p>
+          </li>
+        </ol>
+        <div class="cta-panel">
+          <p class="cta-panel__text">API discovery, signaling, and ICE endpoints are served from <strong>idr.to</strong>. Embed the same connectivity in mobile apps with the Flutter and C SDKs.</p>
+          <a class="btn btn--primary" href="https://download.idr.to/install.sh">Download installer</a>
+        </div>
+      </div>
+    </section>
   </main>
 
-  <script>
-    document.getElementById('year').textContent = new Date().getFullYear();
-
-    document.querySelector('.notify').addEventListener('submit', function (e) {
-      e.preventDefault();
-      var hint = document.querySelector('.notify__hint');
-      hint.hidden = false;
-      this.querySelector('.notify__input').value = '';
-      this.querySelector('.notify__btn').disabled = true;
-    });
-  </script>
+  <footer class="site-footer">
+    <div class="site-footer__inner">
+      <p class="site-footer__brand">idr.to</p>
+      <p class="site-footer__tagline">Hosted identity and signaling for ID-based routing.</p>
+      <p class="site-footer__copy">&copy; 2026 idr.to. All rights reserved.</p>
+    </div>
+  </footer>
 </body>
 </html>
