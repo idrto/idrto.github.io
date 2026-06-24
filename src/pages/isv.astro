@@ -3,6 +3,10 @@ import Layout from '../layouts/Layout.astro';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 
+const byomExample = `const client = IdrClient.forService('ollama');
+await client.connect({ host: userProvidedHost });
+await client.fetch('/api/chat', { method: 'POST', body: … });`;
+
 const browserPattern = `import { IdrClient } from '@idrto/idr_browser_sdk';
 
 // Dev-time: pick service (maps to port on target)
@@ -39,6 +43,36 @@ await client.connect('idrto:laptop~user-40example.com/ssh');`;
         without VPNs or static IPs. ISVs hardcode the service; end-users supply target host and credentials via SDK UI.
       </p>
 
+      <h2>Bring Your Own Machine (BYOM)</h2>
+      <p>
+        The primary ISV pattern for on-device AI: your users run workloads on <strong>their own hardware</strong>
+        (Mac Mini, Linux GPU box, office PC) — you never host the model. They install Ollama (or similar) and an
+        idr.to target agent; your web app connects with a hardcoded service:
+      </p>
+      <pre><code>{byomExample}</code></pre>
+      <p>
+        Inference stays on the user's machine. Your bundle adds connectivity, not GPU cost. See the
+        <a href="/case-study/ollama">Ollama case study</a>.
+      </p>
+
+      <h2>Bundle size</h2>
+      <p>
+        Measured from production build (<code>npm run build</code>, tsup minify + gzip). WebRTC is built into the browser — not included in these figures.
+      </p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Artifact</th><th>Minified</th><th>Gzip</th></tr></thead>
+          <tbody>
+            <tr><td>ESM entry (<code>dist/index.js</code>)</td><td>~37 KB</td><td><strong>~11 KB</strong></td></tr>
+            <tr><td>CJS entry (<code>dist/index.cjs</code>)</td><td>~43 KB</td><td>~13 KB</td></tr>
+            <tr><td>Auth panel chunk (lazy)</td><td>~4 KB</td><td>~1.3 KB</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="callout">
+        Typical SPA impact: <strong>~11–12 KB gzip</strong> for core SDK + auth UI when users sign in. No native binaries in the browser bundle.
+      </p>
+
       <h2>Browser SDK</h2>
       <p><strong>Package:</strong> <code>@idrto/idr_browser_sdk</code> — WebRTC + HTTP-over-tunnel for web apps.</p>
 
@@ -69,8 +103,8 @@ await client.connect('idrto:laptop~user-40example.com/ssh');`;
 
       <h2>Dart SDK (mobile &amp; desktop)</h2>
       <p>
-        <strong>Package:</strong> <code>idr_dart_sdk</code> — pure Dart FFI to <code>libidr_sdk</code> (Rust <code>idr-ffi</code>).
-        No Flutter SDK required, but Flutter example included.
+        Native agent on <strong>Linux, macOS, Windows, Android, and iOS</strong> via FFI.
+        <strong>Package:</strong> <code>idr_dart_sdk</code>.
       </p>
       <pre><code>{dartExample}</code></pre>
 

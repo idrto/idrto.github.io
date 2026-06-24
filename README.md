@@ -26,14 +26,13 @@ Custom domain: `CNAME` → `idr.to`
 
 | Path | Content |
 |------|---------|
-| `/` | Product overview, on-prem workloads, addressing snapshot |
-| `/addressing` | v1 URI grammar, DEF, mirror HTTPS, `*.idr` |
+| `/` | Product overview, platforms, on-prem workloads, addressing snapshot |
+| `/get-started` | CLI install, onboarding, SSH/Postgres/HTTP/HTTPS protocols |
+| `/addressing` | idrto URI grammar, DEF, mirror HTTPS, `*.idr` |
 | `/architecture` | P2P vs signaling vs relay, data billing |
 | `/pricing` | Personal / Enterprise / data bundles |
 | `/case-study/ollama` | M4 Mac Mini + Ollama walkthrough |
-| `/isv` | Browser SDK & Dart SDK |
+| `/isv` | Browser SDK bundle size, BYOM, Dart SDK |
 | `/faq` | FAQ by persona |
 | `/evaluate` | 30-day signaling trial signup |
 | `/checkout` | Mock Stripe purchase flow |
-
-Previous single-file HTML marketing content (pre-v1 URI examples) is **deprecated** and removed.

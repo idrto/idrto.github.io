@@ -1,0 +1,190 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+
+const installCmd = `curl -fsSL https://download.idr.to/install.sh | bash`;
+---
+
+<Layout title="Get started — CLI, onboarding & protocols — idr.to" description="Install the idr CLI, onboard devices, and route HTTP, HTTPS, SSH, and Postgres over idr.to P2P tunnels.">
+  <Header slot="header" />
+  <Footer slot="footer" />
+
+  <section class="section">
+    <div class="container">
+      <p class="eyebrow">Onboarding</p>
+      <h1>Get started with idr.to</h1>
+      <p class="lead">
+        Install the CLI, register on-prem devices, and connect to local services over WebRTC — without opening inbound
+        firewall ports. Works on <strong>Linux, macOS, and Windows</strong> desktops; mobile agents via the
+        <a href="/isv">Dart SDK</a> on <strong>Android and iOS</strong>.
+      </p>
+    </div>
+  </section>
+
+  <section class="section section--alt">
+    <div class="container">
+      <h2>1. Install the CLI</h2>
+      <pre><code>{installCmd}</code></pre>
+      <p>
+        Or download from <a href="https://github.com/idrto/client/releases">GitHub Releases</a>.
+        Package managers: apt, dnf, winget, and Homebrew — see
+        <a href="https://github.com/idrto/client/blob/main/docs/PACKAGING.md">PACKAGING.md</a>.
+      </p>
+
+      <h3>Supported platforms</h3>
+      <div class="card-grid card-grid--3">
+        <div class="card">
+          <h3>Desktop</h3>
+          <ul>
+            <li><strong>Linux</strong> — x86_64, aarch64</li>
+            <li><strong>macOS</strong> — Apple Silicon &amp; Intel</li>
+            <li><strong>Windows</strong> — x86_64</li>
+          </ul>
+          <p>Full <code>idr</code> CLI, source/target/hybrid agents, local proxy.</p>
+        </div>
+        <div class="card">
+          <h3>Mobile</h3>
+          <ul>
+            <li><strong>Android</strong> — via Dart SDK + <code>libidr_sdk.so</code></li>
+            <li><strong>iOS</strong> — via Dart SDK + static <code>libidr_sdk.a</code></li>
+          </ul>
+          <p>Embed the Rust agent through FFI; Flutter example included.</p>
+        </div>
+        <div class="card">
+          <h3>Browser</h3>
+          <ul>
+            <li>Any modern browser with WebRTC</li>
+            <li><a href="/isv">Browser SDK</a> for web apps</li>
+          </ul>
+          <p>No install — connects to on-prem target agents.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <h2>2. Configure &amp; authenticate</h2>
+      <pre><code>cp config/idr-agent.example.toml idr-agent.toml
+# Edit entity_id and host
+
+idr auth login
+idr device register --name laptop</code></pre>
+      <p>
+        Keys and certificates live under <code>.idr/</code> automatically — no manual X.509 setup.
+        For a second machine, use <code>idr device join</code> (master approves) or a join key from
+        <code>idr entity create-join-key</code>.
+      </p>
+
+      <h2>3. Run the target agent (on-prem)</h2>
+      <p>On the machine that hosts your workload (Mac Mini, Linux server, etc.):</p>
+      <pre><code>idr agent run</code></pre>
+      <p>
+        Keeps a persistent WebSocket to <code>wss://idr.to/v1/signal</code> so sources can reach you.
+        Run Ollama, Postgres, sshd, or any service on localhost — the agent forwards tunneled connections.
+      </p>
+
+      <h2>4. Connect from a source machine</h2>
+      <p>On your laptop (source or hybrid agent):</p>
+      <pre><code>idr auth login
+idr agent source   # optional: long-running local proxy for SSH/SOCKS</code></pre>
+    </div>
+  </section>
+
+  <section class="section section--alt" id="protocols">
+    <div class="container">
+      <p class="eyebrow">Protocols</p>
+      <h2>Routing by protocol</h2>
+      <p>
+        idr.to carries <strong>raw L4 bytes</strong> over WebRTC (idr-tunnel-v1). Your tools speak the same protocol
+        they always do — the tunnel is transparent. Use synthetic <code>*.idr</code> hostnames or
+        <code>idrto:</code> URIs; see <a href="/addressing">addressing</a>.
+      </p>
+
+      <article class="protocol card">
+        <h3>SSH (port 22)</h3>
+        <p><strong>Recommended:</strong> OpenSSH <code>ProxyCommand</code> — no manual local port.</p>
+        <pre><code># ~/.ssh/config
+Host *.idr
+  ProxyCommand idr ssh-proxy %h %p
+  StrictHostKeyChecking accept-new
+
+ssh user@laptop.user-40example-2Ecom.idr</code></pre>
+        <p><strong>Alternative:</strong></p>
+        <pre><code>idr connect idrto:laptop~user-40example.com/ssh --local-port 2222 --duration 0
+ssh -p 2222 user@127.0.0.1</code></pre>
+      </article>
+
+      <article class="protocol card">
+        <h3>PostgreSQL (port 5432)</h3>
+        <pre><code># Direct URL (synthetic hostname)
+psql "postgresql://user@db.finance.user-40example-2Ecom.idr:5432/mydb"
+
+# Or local forward
+idr forward --listen 127.0.0.1:15432 --target db.finance.user-40example-2Ecom.idr:5432
+psql -h 127.0.0.1 -p 15432 -U user mydb</code></pre>
+      </article>
+
+      <article class="protocol card">
+        <h3>HTTP (port 80)</h3>
+        <pre><code>idr connect idrto:api~corp.com/http --local-port 8080 --duration 0
+curl http://127.0.0.1:8080/health</code></pre>
+        <p>Or use synthetic hostname with port inference:</p>
+        <pre><code>idr connect api.user-40corp-2Ecom.idr 80 --local-port 8080
+curl http://127.0.0.1:8080/</code></pre>
+      </article>
+
+      <article class="protocol card">
+        <h3>HTTPS (port 443)</h3>
+        <p>TLS pass-through — idr.to does not terminate your certificates.</p>
+        <pre><code>idr connect idrto:api~corp.com/443 --local-port 8443 --duration 0
+curl -vk --resolve api.corp.com:443:127.0.0.1 https://api.corp.com/</code></pre>
+        <p>SOCKS5 / HTTP CONNECT proxy for browser-wide routing:</p>
+        <pre><code>idr http-proxy --listen 127.0.0.1:8080
+curl -x http://127.0.0.1:8080 https://api.staging.user-40example-2Ecom.idr/</code></pre>
+      </article>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Protocol</th><th>Service segment</th><th>Typical command</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>SSH</td><td><code>ssh</code> or <code>22</code></td><td><code>ssh user@host.entity.idr</code></td></tr>
+            <tr><td>PostgreSQL</td><td><code>postgres</code> or <code>5432</code></td><td><code>psql postgresql://…@host.entity.idr:5432/db</code></td></tr>
+            <tr><td>HTTP</td><td><code>http</code> or <code>80</code></td><td><code>idr connect … 80</code> + curl localhost</td></tr>
+            <tr><td>HTTPS</td><td><code>https</code> or <code>443</code></td><td><code>idr connect …/443</code> + curl --resolve</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <h2>Debug &amp; inspect</h2>
+      <pre><code>idr resolve laptop.user-40example-2Ecom.idr
+idr resolve ssh://user@laptop.user-40example-2Ecom.idr:22
+idr host list
+idr device status</code></pre>
+      <p>Full command reference: <a href="https://github.com/idrto/client/blob/main/docs/CLI.md">CLI.md</a> on GitHub.</p>
+
+      <div class="hero__actions" style="margin-top: 2rem;">
+        <a class="btn btn--primary" href="/evaluate">Start 30-day evaluation</a>
+        <a class="btn btn--ghost" href="/addressing">Addressing reference</a>
+      </div>
+    </div>
+  </section>
+</Layout>
+
+<style>
+  h1 { font-size: 2.25rem; margin: 0 0 1rem; }
+  h2 { font-size: 1.5rem; margin: 2rem 0 1rem; }
+  h3 { font-size: 1.0625rem; margin: 0 0 0.5rem; }
+  .protocol { margin: 1.25rem 0; }
+  .protocol p { color: var(--text-muted); margin: 0.5rem 0; }
+  .card ul { color: var(--text-muted); font-size: 0.9375rem; margin: 0; padding-left: 1.1rem; }
+  .card p { color: var(--text-muted); font-size: 0.875rem; margin: 0.75rem 0 0; }
+  .hero__actions { display: flex; flex-wrap: wrap; gap: 0.75rem; }
+</style>

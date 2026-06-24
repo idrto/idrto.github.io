@@ -19,13 +19,32 @@ import Footer from '../components/Footer.astro';
         peer-to-peer whenever the network allows; our servers coordinate discovery, not your bytes.
       </p>
       <div class="hero__actions">
-        <a class="btn btn--primary" href="/evaluate">Start 30-day evaluation</a>
+        <a class="btn btn--primary" href="/get-started">Get started</a>
+        <a class="btn btn--ghost" href="/evaluate">Start 30-day evaluation</a>
         <a class="btn btn--ghost" href="/architecture">How P2P works</a>
       </div>
     </div>
   </section>
 
   <section class="section section--alt">
+    <div class="container">
+      <p class="eyebrow">Platforms</p>
+      <h2>Runs where your workloads run</h2>
+      <div class="card-grid card-grid--2">
+        <div class="card">
+          <h3>Desktop — Linux, macOS, Windows</h3>
+          <p>Native <code>idr</code> CLI and agent: source, target, and hybrid modes. SSH ProxyCommand, Postgres URLs, HTTP/S local forwarding, and systemd/launchd services.</p>
+          <p><a href="/get-started">Install &amp; onboarding →</a></p>
+        </div>
+        <div class="card">
+          <h3>Mobile — Android &amp; iOS</h3>
+          <p><a href="/isv">Dart SDK</a> embeds <code>libidr_sdk</code> via FFI. Run target agents on phones/tablets or build mobile clients that connect to on-prem hardware.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
     <div class="container">
       <p class="eyebrow">What is IDR?</p>
       <h2>DNS gives you names. idr.to gives you <em>reachable</em> on-prem devices.</h2>
@@ -55,7 +74,7 @@ import Footer from '../components/Footer.astro';
     </div>
   </section>
 
-  <section class="section">
+  <section class="section section--alt">
     <div class="container">
       <p class="eyebrow">On-prem workloads</p>
       <h2>What runs on your edge hardware</h2>
@@ -134,9 +153,7 @@ import Footer from '../components/Footer.astro';
           </tbody>
         </table>
       </div>
-      <div class="callout callout--warn">
-        <strong>Deprecated:</strong> Pre-v1 URI forms (<code>idrto:entity/host/service</code>, v2 <code>/--/</code> markers) are no longer supported. This site replaces all prior marketing content.
-      </div>
+      <p style="margin-top: 1.25rem;"><a href="/get-started">CLI install &amp; protocol guide (SSH, Postgres, HTTP/S) →</a></p>
     </div>
   </section>
 
