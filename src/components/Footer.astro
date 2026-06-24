@@ -1,0 +1,92 @@
+<footer class="site-footer">
+  <div class="container">
+    <div class="site-footer__grid">
+      <div>
+        <p class="site-footer__brand">idr.to</p>
+        <p class="site-footer__tagline">ID-Based Routing for on-premise edge devices.</p>
+      </div>
+      <div>
+        <p class="site-footer__heading">Product</p>
+        <ul>
+          <li><a href="/addressing">Addressing</a></li>
+          <li><a href="/architecture">Architecture</a></li>
+          <li><a href="/pricing">Pricing</a></li>
+          <li><a href="/evaluate">30-day evaluation</a></li>
+        </ul>
+      </div>
+      <div>
+        <p class="site-footer__heading">Developers</p>
+        <ul>
+          <li><a href="/isv">ISV &amp; SDKs</a></li>
+          <li><a href="/case-study/ollama">Ollama case study</a></li>
+          <li><a href="/faq">FAQ</a></li>
+          <li><a href="https://github.com/idrto/client">Rust client</a></li>
+        </ul>
+      </div>
+      <div>
+        <p class="site-footer__heading">Resources</p>
+        <ul>
+          <li><a href="https://github.com/idrto/api/tree/main/openspec/URI.md">URI spec</a></li>
+          <li><a href="https://github.com/idrto/idr_browser_sdk">Browser SDK</a></li>
+          <li><a href="https://github.com/idrto/idr_dart_sdk">Dart SDK</a></li>
+          <li><a href="https://github.com/idrto/https-relay">HTTPS relay</a></li>
+        </ul>
+      </div>
+    </div>
+    <p class="site-footer__copy">
+      &copy; {new Date().getFullYear()} idr.to. Previous marketing content (pre-v1 URI grammar) is deprecated.
+    </p>
+  </div>
+</footer>
+
+<style>
+  .site-footer {
+    border-top: 1px solid var(--border);
+    padding: 3rem 0 2rem;
+    margin-top: 4rem;
+    background: var(--bg-elevated);
+  }
+  .site-footer__grid {
+    display: grid;
+    gap: 2rem;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    margin-bottom: 2rem;
+  }
+  .site-footer__brand {
+    font-weight: 700;
+    font-size: 1.125rem;
+    margin: 0 0 0.5rem;
+  }
+  .site-footer__tagline {
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    margin: 0;
+    max-width: 220px;
+  }
+  .site-footer__heading {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+    margin: 0 0 0.75rem;
+  }
+  .site-footer ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .site-footer li { margin: 0.35rem 0; }
+  .site-footer a {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+  }
+  .site-footer a:hover { color: var(--accent); }
+  .site-footer__copy {
+    font-size: 0.8125rem;
+    color: var(--text-muted);
+    margin: 0;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
+  }
+</style>

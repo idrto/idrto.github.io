@@ -1,0 +1,231 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+---
+
+<Layout title="idr.to — ID-Based Routing for edge devices">
+  <Header slot="header" />
+  <Footer slot="footer" />
+
+  <section class="hero section">
+    <div class="container">
+      <p class="eyebrow">On-premise edge · P2P by default</p>
+      <h1>ID-Based Routing for<br /><em>devices behind your firewall.</em></h1>
+      <p class="lead">
+        <strong>idr.to</strong> is a hosted identity and signaling service for <strong>ID-based routing (IDR)</strong>.
+        Run workloads on hardware you control — Mac minis, GPU servers, factory PLCs — and reach them from anywhere
+        with stable names, cryptographic device identity, and policy-governed access. Application data travels
+        peer-to-peer whenever the network allows; our servers coordinate discovery, not your bytes.
+      </p>
+      <div class="hero__actions">
+        <a class="btn btn--primary" href="/evaluate">Start 30-day evaluation</a>
+        <a class="btn btn--ghost" href="/architecture">How P2P works</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section--alt">
+    <div class="container">
+      <p class="eyebrow">What is IDR?</p>
+      <h2>DNS gives you names. idr.to gives you <em>reachable</em> on-prem devices.</h2>
+      <p>
+        Traditional DNS resolves hostnames to IP addresses. That breaks when devices sit behind NAT, rotate networks,
+        or must not expose public ports. idr.to maps a canonical <strong>identity locator</strong>
+        (<code>host~entity-id</code>) to a cryptographically derived <strong>Device-ID</strong>, then uses WebRTC
+        to establish direct data channels between authorized peers.
+      </p>
+      <div class="card-grid card-grid--3" style="margin-top: 2rem;">
+        <div class="card">
+          <span class="badge">Registry</span>
+          <h3>Who owns which host</h3>
+          <p>Entities (users, domains, orgs) register devices and host mappings. Same-entity access works by default; cross-entity requires explicit ACL allows.</p>
+        </div>
+        <div class="card">
+          <span class="badge">Signaling</span>
+          <h3>Introduction only</h3>
+          <p>WebSocket at <code>wss://idr.to/v1/signal</code> relays SDP offers, answers, and ICE candidates. No application payload bytes on this path.</p>
+        </div>
+        <div class="card">
+          <span class="badge">Data plane</span>
+          <h3>P2P by default</h3>
+          <p>Multiplexed <strong>idr-tunnel-v1</strong> over WebRTC carries TCP (SSH, Postgres, HTTP) and UDP-like traffic when you need it.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <p class="eyebrow">On-prem workloads</p>
+      <h2>What runs on your edge hardware</h2>
+      <p class="lead">idr.to does not host your apps — it connects clients to services already listening on your devices.</p>
+      <div class="card-grid card-grid--2">
+        <div class="card">
+          <h3>AI &amp; inference</h3>
+          <ul>
+            <li><strong>Ollama</strong> on Mac Studio / M4 Mini (port 11434)</li>
+            <li>Local LLM APIs, embedding servers, RAG pipelines</li>
+            <li>Browser apps via <a href="/isv">Browser SDK</a> with hardcoded service names</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>Developer &amp; ops</h3>
+          <ul>
+            <li><strong>SSH</strong> to laptops and build agents (<code>/ssh</code> or port 22)</li>
+            <li><strong>PostgreSQL</strong>, Redis, internal admin UIs</li>
+            <li>HTTPS services on ports 443, 8080 with path suffixes</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>Industrial &amp; IoT</h3>
+          <ul>
+            <li>Modbus/OPC gateways on private VLANs</li>
+            <li>Camera/NVR interfaces without public IP</li>
+            <li>UDP workloads via <code>53UDP</code>-style port segments (unordered WebRTC datagrams)</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>Enterprise SaaS backends</h3>
+          <ul>
+            <li>Customer-managed data planes (HIPAA, air-gapped variants)</li>
+            <li>Multi-level hosts: <code>db1.us-east.finance~corp.com</code> (Enterprise tier)</li>
+            <li>Hybrid agents: inbound target + outbound source on one node</li>
+          </ul>
+        </div>
+      </div>
+      <p style="margin-top: 1.5rem;">
+        <a href="/case-study/ollama">Read the Ollama on M4 Mini case study →</a>
+      </p>
+    </div>
+  </section>
+
+  <section class="section section--alt">
+    <div class="container">
+      <p class="eyebrow">Addressing at a glance</p>
+      <h2>One logical target, several URL surfaces</h2>
+      <p>All forms below refer to the same device and service. See the <a href="/addressing">addressing guide</a> for full v1 grammar.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Profile</th><th>Example</th><th>Best for</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>idrto:</strong> canonical</td>
+              <td><code>idrto:laptop~user-40example.com/ollama</code></td>
+              <td>CLI, agents, <code>POST /resolve</code></td>
+            </tr>
+            <tr>
+              <td><strong>Mirror HTTPS</strong></td>
+              <td><code>https://idr.to/laptop~user%40example.com/ollama</code></td>
+              <td>Browser metadata fetch, API discovery</td>
+            </tr>
+            <tr>
+              <td><strong>DEF relay</strong></td>
+              <td><code>https://dlaptop-7euser-40example-2ecom.idr.to/ollama</code></td>
+              <td>Public HTTPS clients when P2P is impossible</td>
+            </tr>
+            <tr>
+              <td><strong>Synthetic <code>*.idr</code></strong></td>
+              <td><code>laptop.user-40example-2Ecom.idr</code></td>
+              <td>SSH ProxyCommand, psql, curl</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout callout--warn">
+        <strong>Deprecated:</strong> Pre-v1 URI forms (<code>idrto:entity/host/service</code>, v2 <code>/--/</code> markers) are no longer supported. This site replaces all prior marketing content.
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <p class="eyebrow">Reachability</p>
+      <h2>Three paths to a target</h2>
+      <div class="card-grid card-grid--3">
+        <div class="card">
+          <h3>① P2P (default)</h3>
+          <p>Direct WebRTC after signaling. <strong>No relay data charges.</strong> Works when NAT/firewall allows ICE.</p>
+        </div>
+        <div class="card">
+          <h3>② TURN (optional)</h3>
+          <p>Media relay through <code>turn.idr.to</code> when symmetric NAT blocks direct paths. Counts toward data transfer bundles.</p>
+        </div>
+        <div class="card">
+          <h3>③ HTTPS edge relay</h3>
+          <p>For clients that only speak TLS to a public hostname. Operator-deployed <code>https-relay</code> on <code>*.idr.to</code> DEF labels. <strong>Billed per data transferred.</strong></p>
+        </div>
+      </div>
+      <p style="margin-top: 1.25rem;"><a href="/architecture">Full architecture &amp; billing implications →</a></p>
+    </div>
+  </section>
+
+  <section class="section section--alt">
+    <div class="container">
+      <p class="eyebrow">Pricing snapshot</p>
+      <h2>Simple tiers + pay-as-you-go data</h2>
+      <div class="card-grid card-grid--2">
+        <div class="card pricing-card">
+          <span class="badge">Personal</span>
+          <p class="pricing-card__price">US$5 <span>/ year</span></p>
+          <ul>
+            <li>Single-level host (e.g. <code>laptop~you@example.com</code>)</li>
+            <li>Up to 5 devices per user</li>
+            <li>Signaling + P2P included</li>
+            <li>Data transfer bundles optional</li>
+          </ul>
+          <a class="btn btn--primary" href="/checkout?plan=personal">Subscribe</a>
+        </div>
+        <div class="card pricing-card">
+          <span class="badge">Enterprise</span>
+          <p class="pricing-card__price">US$50 <span>/ user / year</span></p>
+          <p style="margin:0;color:var(--text-muted);font-size:0.875rem;">or US$5 / user / month</p>
+          <ul>
+            <li>Multi-level hosts (e.g. <code>db1.us-east.finance~corp.com</code>)</li>
+            <li>Up to 5 devices per user</li>
+            <li>Cross-entity ACLs, org delegation</li>
+            <li>Priority support</li>
+          </ul>
+          <a class="btn btn--primary" href="/checkout?plan=enterprise">Subscribe</a>
+        </div>
+      </div>
+      <p style="margin-top:1.25rem;color:var(--text-muted);">
+        Data transfer: <strong>US$10 per 500 GB</strong> bundle (TURN + HTTPS relay). Unused quota rolls over up to 12 months.
+        Without bundles, targets remain reachable on <strong>P2P only</strong>.
+        <a href="/pricing">Full pricing →</a>
+      </p>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container" style="text-align:center;">
+      <h2>Try signaling free for 30 days</h2>
+      <p class="lead" style="margin-inline:auto;">Evaluate registry, ACLs, and WebRTC signaling on your own on-prem agents. No credit card required for the trial.</p>
+      <a class="btn btn--primary" href="/evaluate">Start evaluation</a>
+    </div>
+  </section>
+</Layout>
+
+<style>
+  .hero h1 {
+    font-size: clamp(2.25rem, 5vw, 3.25rem);
+    max-width: 18ch;
+    margin: 0 0 1.25rem;
+  }
+  .hero__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 2rem;
+  }
+  .section h2 {
+    font-size: clamp(1.5rem, 3vw, 2rem);
+    max-width: 28ch;
+    margin: 0 0 1rem;
+  }
+  .card h3 { margin: 0.5rem 0 0.75rem; font-size: 1.0625rem; }
+  .card p, .card ul { color: var(--text-muted); font-size: 0.9375rem; margin: 0; }
+  .card ul { padding-left: 1.1rem; }
+</style>

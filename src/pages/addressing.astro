@@ -1,0 +1,125 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+---
+
+<Layout title="Addressing — idr.to" description="v1 idrto URI grammar, DEF encoding, HTTPS mirror, and synthetic *.idr hostnames.">
+  <Header slot="header" />
+  <Footer slot="footer" />
+
+  <section class="section">
+    <div class="container">
+      <p class="eyebrow">v1 grammar</p>
+      <h1>Addressing profiles</h1>
+      <p class="lead">
+        idr.to v1 uses a single logical model: <strong>host~entity-id</strong> identifies the device;
+        <strong>service-or-port</strong> selects the local workload. Four surface forms exist for different clients.
+      </p>
+
+      <h2>Canonical idrto URI</h2>
+      <pre><code>idrto:&lt;host&gt;~&lt;entity-id&gt;/&lt;service-or-port&gt;[/&lt;path…&gt;][?query]</code></pre>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Segment</th><th>Rule</th><th>Examples</th></tr></thead>
+          <tbody>
+            <tr><td><code>host</code></td><td>Dot-separated labels; device name is rightmost</td><td><code>laptop</code>, <code>db1.finance</code>, <code>edge.us-east</code></td></tr>
+            <tr><td><code>entity-id</code></td><td>Email, domain, or UUID; idr-escaped in authority</td><td><code>user-40example.com</code> → <code>user@example.com</code></td></tr>
+            <tr><td>service-or-port</td><td>Digit-first → port (optional <code>UDP</code> suffix); letter-first → named service</td><td><code>443</code>, <code>53UDP</code>, <code>ssh</code>, <code>ollama</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Examples</h3>
+      <pre><code>idrto:laptop~user-40example.com/ssh
+idrto:laptop~example.com/443
+idrto:laptop.us-east~user-40example.com/53UDP
+idrto:api~corp.com/443/v1/health?verbose=1</code></pre>
+
+      <h2>idr-escape (entity segment)</h2>
+      <p>Reserved characters in the <code>idrto:</code> authority use <code>-XX</code> uppercase hex:</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Char</th><th>Encoded</th></tr></thead>
+          <tbody>
+            <tr><td><code>@</code></td><td><code>-40</code></td></tr>
+            <tr><td><code>.</code></td><td><code>-2E</code> (in DNS label mode for <code>*.idr</code>)</td></tr>
+            <tr><td><code>~</code></td><td><code>-7E</code></td></tr>
+            <tr><td><code>/</code></td><td><code>-2F</code></td></tr>
+            <tr><td><code>-</code></td><td><code>-2D</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2>Mirror HTTPS (metadata API)</h2>
+      <pre><code>https://idr.to/&lt;host&gt;~&lt;url-encoded-entity-id&gt;/&lt;service-or-port&gt;[/path][?query]</code></pre>
+      <p>
+        Same logical target as <code>idrto:</code>, with percent-encoding instead of idr-escape for the entity.
+        Used for browser <code>fetch</code>, OpenAPI metadata routes, and tooling that prefers HTTPS URLs.
+        Hits the <strong>hosted idr.to API</strong> — returns JSON for connection setup, not proxied application bytes.
+      </p>
+      <pre><code>https://idr.to/laptop~user%40example.com/ollama
+https://idr.to/laptop~user%40example.com/443/api/v1?source_host=workstation</code></pre>
+      <div class="callout">
+        Mirror URLs are <strong>not</strong> DEF hostnames. They use path-based routing on the apex <code>idr.to</code> host.
+      </div>
+
+      <h2>DEF encoding (<code>*.idr.to</code> relay)</h2>
+      <p>
+        For public HTTPS ingress via the optional <a href="https://github.com/idrto/https-relay">https-relay</a>,
+        only the <strong>identity locator</strong> is encoded into the DNS label. Service and path live in the URL path.
+      </p>
+      <pre><code>Identity locator:  laptop.us-east~user@example.com
+DEF label:         dlaptop-2eus-2deast-7euser-40example-2ecom
+FQDN:              dlaptop-2eus-2deast-7euser-40example-2ecom.idr.to
+HTTPS URL:         https://dlaptop-2eus-2deast-7euser-40example-2ecom.idr.to/443/api/v1</code></pre>
+      <p>
+        DEF is generic byte-escape: lowercase letters and digits pass through; other bytes become <code>-hh</code> (e.g. <code>~</code> → <code>-7e</code>, <code>@</code> → <code>-40</code>).
+        Labels longer than 62 DEF body characters use hash encoding (<code>h…</code>) — opaque and not client-decodable.
+      </p>
+
+      <h2>Synthetic <code>*.idr</code> hostnames</h2>
+      <pre><code>&lt;host&gt;.&lt;idr-escaped-entity&gt;.idr</code></pre>
+      <p>
+        Tool-native hostnames for SSH, Postgres, and curl. Service is inferred from port (22 → ssh, 5432 → postgres, 11434 → ollama).
+        Decoded locally by the idr client — no DNS registration required.
+      </p>
+      <pre><code>ssh user@laptop.user-40example-2Ecom.idr
+psql postgresql://u@db1.finance.user-40example-2Ecom.idr:5432/mydb</code></pre>
+
+      <h2>Personal vs Enterprise host depth</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Tier</th><th>Host example</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr><td>Personal</td><td><code>laptop~user@example.com</code></td><td>Single-level host label only</td></tr>
+            <tr><td>Enterprise</td><td><code>db1.us-east.finance~corp.com</code></td><td>Multi-level subdomain context within entity namespace</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2>Named services → ports</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Service</th><th>Port</th><th>Transport</th></tr></thead>
+          <tbody>
+            <tr><td><code>ssh</code></td><td>22</td><td>TCP</td></tr>
+            <tr><td><code>http</code></td><td>80</td><td>TCP</td></tr>
+            <tr><td><code>https</code></td><td>443</td><td>TCP</td></tr>
+            <tr><td><code>postgres</code></td><td>5432</td><td>TCP</td></tr>
+            <tr><td><code>ollama</code></td><td>11434</td><td>TCP</td></tr>
+            <tr><td><code>53UDP</code></td><td>53</td><td>UDP (unordered WebRTC datagram channel)</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p><a href="https://github.com/idrto/api/blob/main/openspec/URI.md">Full URI spec on GitHub →</a></p>
+    </div>
+  </section>
+</Layout>
+
+<style>
+  h1 { font-size: 2.25rem; margin: 0 0 1rem; }
+  h2 { font-size: 1.5rem; margin: 2.5rem 0 1rem; }
+  h3 { font-size: 1.125rem; margin: 1.5rem 0 0.75rem; }
+</style>

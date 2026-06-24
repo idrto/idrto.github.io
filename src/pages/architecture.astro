@@ -1,0 +1,137 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+---
+
+<Layout title="Architecture — P2P, signaling & relay — idr.to">
+  <Header slot="header" />
+  <Footer slot="footer" />
+
+  <section class="section">
+    <div class="container">
+      <p class="eyebrow">Control vs data plane</p>
+      <h1>P2P in detail: signaling vs data</h1>
+      <p class="lead">
+        idr.to is deliberately split: our hosted service knows <em>who</em> may talk to <em>whom</em> and helps
+        peers find a network path. Once connected, your SSH sessions, SQL queries, and LLM API calls flow directly
+        between devices whenever ICE succeeds.
+      </p>
+
+      <h2>What goes through idr.to servers</h2>
+      <div class="card-grid card-grid--2">
+        <div class="card">
+          <h3>Registry &amp; policy</h3>
+          <ul>
+            <li>Entity and device registration</li>
+            <li>Host → Device-ID mappings</li>
+            <li>ACL evaluation at <code>POST /resolve</code></li>
+            <li>OIDC login, access keys, billing entitlements</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>Signaling (WebSocket)</h3>
+          <ul>
+            <li>Target agents: persistent <code>wss://idr.to/v1/signal</code></li>
+            <li>Sources: ephemeral WSS after resolve</li>
+            <li>SDP offers/answers and ICE candidates relayed</li>
+            <li>STUN URLs issued; TURN credentials when subscribed</li>
+          </ul>
+        </div>
+      </div>
+      <div class="callout">
+        Signaling messages are small JSON frames — kilobytes per connection setup, not your application throughput.
+      </div>
+
+      <h2>What stays peer-to-peer (default)</h2>
+      <p>
+        After ICE completes, peers run <strong>idr-tunnel-v1</strong>: a multiplexed layer-4 tunnel over a WebRTC
+        data channel. Each stream maps to a TCP connection (or UDP-style datagrams when using <code>…UDP</code> port segments).
+      </p>
+      <pre class="flow-diagram">Source client                    idr.to API              Target agent (on-prem)
+     |                                |                         |
+     |-- POST /resolve -------------->|                         |
+     |<-- device_id, signal_session --|                         |
+     |                                |                         |
+     |-- WSS signal.offer ------------------------------------>|
+     |<-- WSS signal.answer -------------------------------------|
+     |<======== ICE candidates (via WSS) =======================>|
+     |                                                          |
+     |======== WebRTC DATA (SSH/HTTP/Ollama bytes) =============>| local :11434
+     |                                X                         |
+     |                     (no app bytes on server)               |</pre>
+
+      <h2>Agent modes</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Mode</th><th>Role</th><th>Typical deployment</th></tr></thead>
+          <tbody>
+            <tr><td><strong>source</strong></td><td>Initiates connections only</td><td>Developer laptop with SSH ProxyCommand</td></tr>
+            <tr><td><strong>target</strong></td><td>Accepts inbound tunnels</td><td>Mac Mini in office running Ollama</td></tr>
+            <tr><td><strong>hybrid</strong></td><td>Both</td><td>Edge gateway, CI runner</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2>When P2P is not enough</h2>
+
+      <h3>TURN relay (symmetric NAT / strict firewalls)</h3>
+      <p>
+        If ICE cannot establish a direct UDP path, peers may use <code>turn.idr.to</code> to relay WebRTC media.
+        Traffic still uses WebRTC encryption; bytes pass through TURN infrastructure and <strong>count toward your data transfer bundles</strong>.
+      </p>
+
+      <h3>HTTPS edge relay (non-WebRTC clients)</h3>
+      <p>
+        Some clients only speak ordinary HTTPS/TLS to a public hostname — legacy integrations, certain corporate proxies,
+        or tools that cannot load WebRTC. The open-source <strong>https-relay</strong> deploys on <code>*.idr.to</code>
+        DEF hostnames:
+      </p>
+      <ol>
+        <li>Client connects to <code>https://&lt;def-label&gt;.idr.to/443/…</code></li>
+        <li>Relay reads TLS SNI, DEF-decodes identity locator</li>
+        <li>Encrypted bytes pipe over agent WebSocket mux to on-prem service</li>
+      </ol>
+      <div class="callout callout--warn">
+        <strong>Relay incurs data transfer charges.</strong> Relay bytes are metered in 500 GB bundles (US$10 each).
+        Without purchased bundles, targets remain reachable on <strong>P2P connections only</strong> — signaling still works,
+        but TURN and HTTPS relay paths are not provisioned.
+      </div>
+
+      <h2>Data transfer billing</h2>
+      <ul>
+        <li>Bundles: <strong>500 GB</strong> increments at <strong>US$10</strong> each</li>
+        <li>Subscribe to as many bundles as needed (stackable)</li>
+        <li><strong>Unused data rolls over</strong> month-to-month for up to <strong>12 months</strong></li>
+        <li>Applies to TURN and HTTPS relay mux metering</li>
+        <li>Pure P2P (no relay) → <strong>no data charges</strong></li>
+      </ul>
+      <p><a href="/pricing">See pricing →</a></p>
+
+      <h2>Security properties</h2>
+      <ul>
+        <li><strong>Device-ID</strong> derived from Ed25519 public key (first 120 bits of SHA-256)</li>
+        <li>Same-entity access allowed by default; cross-entity requires explicit ACL rows</li>
+        <li>TLS pass-through mode: relay does not terminate end-user TLS on port 443</li>
+        <li>Browser SDK: access keys never touch ISV JavaScript — auth panel runs in SDK shadow DOM</li>
+      </ul>
+
+      <h2>Also documented in code</h2>
+      <ul>
+        <li><a href="https://github.com/idrto/api/blob/main/openspec/signaling.md">Signaling protocol</a></li>
+        <li><a href="https://github.com/idrto/client/blob/main/docs/TUNNEL.md">idr-tunnel-v1 wire format</a></li>
+        <li><a href="https://github.com/idrto/client/blob/main/docs/AGENT_MODES.md">Agent modes</a></li>
+        <li><a href="https://github.com/idrto/client/blob/main/docs/LOCAL_PROXY.md">Local proxy (SSH/SOCKS)</a></li>
+        <li><a href="https://github.com/idrto/api/blob/main/docs/BILLING.md">Billing entitlements (API)</a></li>
+      </ul>
+    </div>
+  </section>
+</Layout>
+
+<style>
+  h1 { font-size: 2.25rem; margin: 0 0 1rem; }
+  h2 { font-size: 1.5rem; margin: 2.5rem 0 1rem; }
+  h3 { font-size: 1.125rem; margin: 1.5rem 0 0.75rem; }
+  ul { color: var(--text-muted); }
+  ol { color: var(--text-muted); padding-left: 1.25rem; }
+</style>

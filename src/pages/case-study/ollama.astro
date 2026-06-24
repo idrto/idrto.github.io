@@ -1,0 +1,137 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Header from '../../components/Header.astro';
+import Footer from '../../components/Footer.astro';
+
+const browserSdkExample = `import { IdrClient } from '@idrto/idr_browser_sdk';
+
+const client = IdrClient.forService('ollama');
+await client.ensureSession({ interactive: true, mount: document.getElementById('auth') });
+await client.connect({ host: 'gpu-a.us-east.user-40acme-2Ecom.idr' });
+
+const res = await client.fetch('/api/chat', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    model: 'llama3.2',
+    messages: [{ role: 'user', content: 'Summarize our Q3 edge strategy.' }],
+    stream: true,
+  }),
+});`;
+
+const accessKeyCurl = `curl -X POST https://idr.to/v1/access-keys \\
+  -H "Authorization: Bearer …" \\
+  -d '{"label":"contractor-q3","scopes":["resolve","connect"]}'`;
+---
+
+<Layout title="Case study: Ollama on M4 Mac Mini — idr.to">
+  <Header slot="header" />
+  <Footer slot="footer" />
+
+  <section class="section">
+    <div class="container">
+      <p class="eyebrow">Case study</p>
+      <h1>Run Ollama on an M4 Mac Mini.<br />Use it from <em>anywhere.</em></h1>
+      <p class="lead">
+        A practical walkthrough: local LLM inference on Apple Silicon at home or in a branch office,
+        reachable by your team and embedded in a browser app — without opening port 11434 to the internet.
+      </p>
+
+      <h2>Scenario</h2>
+      <p>
+        <strong>Acme AI</strong> runs <a href="https://ollama.com">Ollama</a> on a Mac Mini M4 in their Austin office.
+        Models (Llama, Mistral, etc.) stay on-prem for latency and data residency. Engineers want CLI access from laptops;
+        product wants a web UI that calls <code>/api/chat</code> without VPN.
+      </p>
+
+      <h2>Architecture</h2>
+      <pre class="flow-diagram">┌─────────────────────┐         signaling (WSS)        ┌──────────────────┐
+│  Developer laptop   │◄──────────────────────────────►│  idr.to hosted   │
+│  idr agent (source) │                                │  registry+signal │
+└─────────┬───────────┘                                └────────▲─────────┘
+          │                                                     │
+          │ WebRTC P2P (idr-tunnel)                             │ persistent WSS
+          │ HTTP bytes to :11434                                │
+          ▼                                                     │
+┌─────────────────────┐                                         │
+│  Mac Mini M4 (target)│─────────────────────────────────────────┘
+│  Ollama :11434       │
+│  idr agent (target)  │
+└─────────────────────┘</pre>
+
+      <h2>Step 1 — Subscribe &amp; register</h2>
+      <ol>
+        <li>Create an Enterprise entity <code>acme.com</code> (multi-level hosts for <code>gpu-a.us-east~acme.com</code>).</li>
+        <li>Install the CLI: <code>curl -fsSL https://download.idr.to/install.sh | bash</code></li>
+        <li>On the Mac Mini: <code>idr auth login admin@acme.com</code></li>
+        <li>Start target agent: <code>idr agent run</code> (or systemd/launchd service)</li>
+        <li>Register host: <code>idr host register gpu-a.us-east</code></li>
+        <li>Install Ollama and pull models: <code>ollama pull llama3.2</code></li>
+      </ol>
+
+      <h2>Step 2 — CLI access from a laptop</h2>
+      <p>Developer machine runs a source agent and uses synthetic hostname + port inference:</p>
+      <pre><code># ~/.ssh/config — optional for other services
+Host *.idr
+  ProxyCommand idr ssh-proxy %h %p
+
+# Resolve and tunnel Ollama port
+idr connect gpu-a.us-east.user-40acme-2Ecom.idr 11434 --local-port 11434
+
+# In another terminal
+curl http://127.0.0.1:11434/api/tags</code></pre>
+      <p>Canonical URI under the hood:</p>
+      <pre><code>idrto:gpu-a.us-east~acme.com/ollama</code></pre>
+
+      <h2>Step 3 — Browser app (ISV)</h2>
+      <p>Acme's product team embeds the Browser SDK — service hardcoded, user only enters host:</p>
+      <pre><code>{browserSdkExample}</code></pre>
+      <p>
+        Bytes flow WebRTC P2P to <code>127.0.0.1:11434</code> on the Mac Mini. The idr.to server never sees prompt or completion content.
+      </p>
+
+      <h2>Step 4 — Delegate access with access keys</h2>
+      <p>Owner creates a scoped key for a contractor:</p>
+      <pre><code>{accessKeyCurl}</code></pre>
+      <p>Contractor pastes <code>idr_ak_…</code> into the SDK auth panel — no ISV code changes.</p>
+
+      <h2>When the network blocks P2P</h2>
+      <p>
+        If a user on a strict corporate Wi‑Fi cannot complete ICE, Acme purchases a <strong>500 GB data bundle</strong>
+        (US$10) to enable TURN. If a legacy integration requires plain HTTPS to a public hostname, they deploy
+        <code>https-relay</code> with DEF URL:
+      </p>
+      <pre><code>https://dgpu-a-2eus-2east-7eacme-2ecom.idr.to/ollama/api/chat</code></pre>
+      <p>Relay traffic counts against bundles; P2P paths do not.</p>
+
+      <h2>Results</h2>
+      <div class="card-grid card-grid--3">
+        <div class="card">
+          <h3>Latency</h3>
+          <p>Local inference on M4; only network RTT added when remote — no cloud hop for tokens.</p>
+        </div>
+        <div class="card">
+          <h3>Security</h3>
+          <p>No inbound firewall rules; ACLs at resolve; models never stored on idr.to infrastructure.</p>
+        </div>
+        <div class="card">
+          <h3>Cost</h3>
+          <p>Enterprise US$50/user/year + optional relay bundles only when needed.</p>
+        </div>
+      </div>
+
+      <p style="margin-top: 2rem;">
+        <a class="btn btn--primary" href="/isv">ISV integration guide</a>
+        <a class="btn btn--ghost" href="/evaluate">Start evaluation</a>
+      </p>
+    </div>
+  </section>
+</Layout>
+
+<style>
+  h1 { font-size: 2.25rem; margin: 0 0 1rem; }
+  h2 { font-size: 1.5rem; margin: 2.5rem 0 1rem; }
+  h3 { font-size: 1.0625rem; margin: 0 0 0.5rem; }
+  ol { color: var(--text-muted); padding-left: 1.25rem; }
+  .card p { color: var(--text-muted); margin: 0; font-size: 0.9375rem; }
+</style>

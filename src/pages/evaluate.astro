@@ -1,0 +1,114 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+---
+
+<Layout title="30-day evaluation — idr.to">
+  <Header slot="header" />
+  <Footer slot="footer" />
+
+  <section class="section">
+    <div class="container" style="max-width: 520px;">
+      <p class="eyebrow">Free trial</p>
+      <h1>Start your 30-day evaluation</h1>
+      <p class="lead">
+        Signaling-only access: registry, device identity, ACLs, WebRTC introduction, and peer-to-peer tunnels.
+        No credit card required. Relay data bundles are not included — add them after purchase.
+      </p>
+
+      <form class="eval-form card" id="eval-form">
+        <label>
+          <span>Work email</span>
+          <input type="email" name="email" required placeholder="you@company.com" />
+        </label>
+        <label>
+          <span>Entity ID</span>
+          <input type="text" name="entity" required placeholder="company.com or you@example.com" />
+          <small>Becomes your namespace for host registration</small>
+        </label>
+        <label>
+          <span>Plan interest</span>
+          <select name="plan">
+            <option value="personal">Personal (single-level host)</option>
+            <option value="enterprise">Enterprise (multi-level hosts)</option>
+            <option value="undecided">Undecided</option>
+          </select>
+        </label>
+        <label class="checkbox">
+          <input type="checkbox" name="terms" required />
+          <span>I understand this trial includes signaling and P2P only; HTTPS/TURN relay requires paid data bundles after evaluation.</span>
+        </label>
+        <button type="submit" class="btn btn--primary" style="width:100%;">Start 30-day evaluation</button>
+      </form>
+
+      <p id="eval-success" class="callout" hidden>
+        Evaluation started (demo). In production, you would receive a verification email and CLI login instructions.
+        When your trial ends, <a href="/checkout">purchase a plan</a> to continue signaling.
+      </p>
+
+      <h2>What's included</h2>
+      <ul>
+        <li>Up to 5 devices during trial</li>
+        <li><code>idr auth login</code> + agent (source/target/hybrid)</li>
+        <li>WebRTC P2P when network allows</li>
+        <li>Browser SDK &amp; CLI access</li>
+      </ul>
+      <h2>Not included</h2>
+      <ul>
+        <li>TURN relay data (purchase 500 GB bundles)</li>
+        <li>Managed HTTPS edge relay metering</li>
+        <li>Enterprise cross-entity ACLs (Enterprise plan after trial)</li>
+      </ul>
+    </div>
+  </section>
+</Layout>
+
+<script>
+  document.getElementById('eval-form')?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const form = e.target as HTMLFormElement;
+    form.hidden = true;
+    document.getElementById('eval-success')?.removeAttribute('hidden');
+  });
+</script>
+
+<style>
+  h1 { font-size: 2rem; margin: 0 0 1rem; }
+  h2 { font-size: 1.125rem; margin: 2rem 0 0.75rem; }
+  ul { color: var(--text-muted); font-size: 0.9375rem; }
+  .eval-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    margin: 2rem 0;
+  }
+  .eval-form label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+  }
+  .eval-form label.checkbox {
+    flex-direction: row;
+    align-items: flex-start;
+    font-weight: 400;
+    color: var(--text-muted);
+  }
+  .eval-form label.checkbox input { margin-top: 0.25rem; }
+  .eval-form small {
+    font-weight: 400;
+    color: var(--text-muted);
+    font-size: 0.8125rem;
+  }
+  .eval-form input,
+  .eval-form select {
+    padding: 0.65rem 0.85rem;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--bg-elevated);
+    color: var(--text);
+    font: inherit;
+  }
+</style>

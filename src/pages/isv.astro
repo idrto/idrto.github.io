@@ -1,0 +1,116 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+
+const browserPattern = `import { IdrClient } from '@idrto/idr_browser_sdk';
+
+// Dev-time: pick service (maps to port on target)
+const client = IdrClient.forService('ollama'); // → 11434
+
+// Runtime: user auth + target host only
+await client.ensureSession({ interactive: true, mount: authElement });
+await client.connect({ host: userEnteredHost });
+const res = await client.fetch('/api/tags');`;
+
+const dartExample = `import 'package:idr_dart_sdk/idr_dart_sdk.dart';
+
+final client = await IdrClient.open(IdrConfig(
+  apiBaseUrl: 'https://idr.to',
+  stateDir: stateDir,
+  library: DefaultIdrNativeLibrary(libraryPath: nativeLibPath),
+));
+
+await client.loginWithPassword(email: 'user@example.com', password: '…');
+await client.startAgent(mode: IdrAgentMode.target);
+await client.connect('idrto:laptop~user-40example.com/ssh');`;
+---
+
+<Layout title="ISVs & SDKs — idr.to">
+  <Header slot="header" />
+  <Footer slot="footer" />
+
+  <section class="section">
+    <div class="container">
+      <p class="eyebrow">For software vendors</p>
+      <h1>Embed idr.to in your apps</h1>
+      <p class="lead">
+        Ship products that connect to customer-owned edge hardware — GPU boxes, factory gateways, on-prem APIs —
+        without VPNs or static IPs. ISVs hardcode the service; end-users supply target host and credentials via SDK UI.
+      </p>
+
+      <h2>Browser SDK</h2>
+      <p><strong>Package:</strong> <code>@idrto/idr_browser_sdk</code> — WebRTC + HTTP-over-tunnel for web apps.</p>
+
+      <h3>Integration pattern</h3>
+      <pre><code>{browserPattern}</code></pre>
+
+      <h3>Rules for ISVs</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Do</th><th>Don't</th></tr></thead>
+          <tbody>
+            <tr><td>Use <code>mountAuthPanel()</code> / <code>&lt;idr-auth-panel&gt;</code></td><td>Build your own access-key input</td></tr>
+            <tr><td>Let users enter <code>host.entity.idr</code> or idrto URI</td><td>POST tokens to your backend</td></tr>
+            <tr><td>Hardcode service name at build time</td><td>Pass <code>accessKey</code> to <code>connect()</code></td></tr>
+            <tr><td>CSP: <code>connect-src https://idr.to wss://idr.to</code></td><td>Override platform URLs</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Framework examples</h3>
+      <p>Vanilla, React, Vue, Svelte, and Angular Vite starters ship in the <a href="https://github.com/idrto/idr_browser_sdk">idr_browser_sdk</a> repo.</p>
+
+      <h3>Auth options</h3>
+      <ul>
+        <li><strong>Account login</strong> — <code>POST /v1/auth/browser/login</code> (OIDC-style session)</li>
+        <li><strong>Access keys</strong> — owner-issued <code>idr_ak_…</code> for delegates; exchanged client-side only</li>
+      </ul>
+
+      <h2>Dart SDK (mobile &amp; desktop)</h2>
+      <p>
+        <strong>Package:</strong> <code>idr_dart_sdk</code> — pure Dart FFI to <code>libidr_sdk</code> (Rust <code>idr-ffi</code>).
+        No Flutter SDK required, but Flutter example included.
+      </p>
+      <pre><code>{dartExample}</code></pre>
+
+      <h3>Platform artifacts</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Platform</th><th>Native library</th></tr></thead>
+          <tbody>
+            <tr><td>Linux / Android</td><td><code>libidr_sdk.so</code></td></tr>
+            <tr><td>macOS</td><td><code>libidr_sdk.dylib</code></td></tr>
+            <tr><td>Windows</td><td><code>idr_sdk.dll</code></td></tr>
+            <tr><td>iOS</td><td>static <code>libidr_sdk.a</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Build from the <a href="https://github.com/idrto/client/tree/main/crates/idr-ffi">client idr-ffi crate</a> and ship the library with your app.</p>
+
+      <h2>Other embed options</h2>
+      <ul>
+        <li><strong>C / C++ FFI</strong> — same <code>libidr_sdk</code> for native integrations</li>
+        <li><strong>Rust crate</strong> — full agent in-process for appliances</li>
+        <li><strong>CLI subprocess</strong> — wrap <code>idr connect</code> for quick prototypes</li>
+      </ul>
+
+      <h2>White-label / multi-tenant</h2>
+      <p>
+        ISVs can point SDKs at dedicated tenants (<code>{'{slug}'}.t.idr.to</code> or custom CNAME).
+        Bake <code>apiBaseUrl</code> at build time; signaling URL is derived automatically.
+      </p>
+
+      <h2>Get started</h2>
+      <a class="btn btn--primary" href="/evaluate">30-day evaluation</a>
+      <a class="btn btn--ghost" href="https://github.com/idrto/idr_browser_sdk/blob/main/docs/ISV_GUIDE.md">Full ISV guide (GitHub)</a>
+    </div>
+  </section>
+</Layout>
+
+<style>
+  h1 { font-size: 2.25rem; margin: 0 0 1rem; }
+  h2 { font-size: 1.5rem; margin: 2.5rem 0 1rem; }
+  h3 { font-size: 1.125rem; margin: 1.25rem 0 0.75rem; }
+  ul { color: var(--text-muted); }
+</style>

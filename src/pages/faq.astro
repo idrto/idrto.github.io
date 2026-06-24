@@ -1,0 +1,232 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+
+const personas = [
+  {
+    id: 'owner',
+    title: 'Entity owners & IT admins',
+    items: [
+      {
+        q: 'What do I need running on-prem?',
+        a: 'A target or hybrid idr agent on each device you want reachable, plus whatever service you expose (Ollama, sshd, Postgres, etc.). The agent listens on a WebSocket to idr.to for signaling; it does not require a public inbound port for P2P.',
+      },
+      {
+        q: 'How many devices can I register?',
+        a: 'Each user subscription (Personal or Enterprise) includes up to five devices. Multiple devices can share the same host name — resolve round-robins among them like DNS.',
+      },
+      {
+        q: 'Personal vs Enterprise host naming?',
+        a: 'Personal allows a single-level host (e.g. laptop~you@example.com). Enterprise allows multi-level hosts reflecting org structure (e.g. db1.us-east.finance~corp.com).',
+      },
+      {
+        q: 'Do I need to buy data transfer bundles?',
+        a: 'Only if users cannot connect via P2P and you rely on TURN or HTTPS relay. Without bundles, signaling and direct WebRTC still work — relay paths are not provisioned.',
+      },
+      {
+        q: 'How do I grant access to someone outside my entity?',
+        a: 'Create an explicit ACL allow rule (Enterprise). Same-entity access works by default without extra configuration.',
+      },
+      {
+        q: 'Can I use my own domain?',
+        a: 'Enterprise supports subdomain entities (finance.example.com) and multi-tenant white-label deployments with custom API base URLs.',
+      },
+    ],
+  },
+  {
+    id: 'developer',
+    title: 'Developers & DevOps',
+    items: [
+      {
+        q: 'Which URI form should I use in scripts?',
+        a: 'Prefer idrto: URIs internally (idrto:laptop~user-40example.com/ssh). Use *.idr synthetic hostnames for SSH ProxyCommand and psql. Use https://idr.to/… for browser metadata fetch. Use *.idr.to DEF URLs only for HTTPS relay ingress.',
+      },
+      {
+        q: 'Are pre-v1 URIs supported?',
+        a: 'No. Forms like idrto:entity/host/service and /--/ v2 markers are deprecated. See the addressing guide for v1 grammar.',
+      },
+      {
+        q: 'How does SSH integration work?',
+        a: 'Add ProxyCommand idr ssh-proxy %h %p for Host *.idr in ~/.ssh/config, then ssh user@laptop.user-40example-2Ecom.idr. The source agent bridges stdio to a WebRTC tunnel.',
+      },
+      {
+        q: 'What is idr-tunnel-v1?',
+        a: 'A multiplexed L4 protocol over WebRTC data channels. Stream 0 carries OPEN control frames; payload streams map to TCP connections. UDP ports use unordered, unreliable SCTP semantics (e.g. 53UDP).',
+      },
+      {
+        q: 'How do I debug connection failures?',
+        a: 'Check resolve response (device online?), signaling WSS connectivity, ICE candidates in agent logs, and whether TURN is required. See client TUNNEL.md and api NAT_TESTING.md.',
+      },
+      {
+        q: 'Can I self-host the API or relay?',
+        a: 'Yes. The API stack and https-relay are open source. Multi-tenant production guidance is in api/docs/PRODUCTION.md. Managed idr.to is the default hosted offering.',
+      },
+    ],
+  },
+  {
+    id: 'isv',
+    title: 'ISVs & app builders',
+    items: [
+      {
+        q: 'Can I collect access keys in my app UI?',
+        a: 'No. Use the Browser SDK auth panel only. Keys must not enter ISV JavaScript state or your backend — the SDK exchanges them directly with idr.to.',
+      },
+      {
+        q: 'What does the end-user configure?',
+        a: 'Target host (e.g. edge-gpu-1.user-40example-2Ecom.idr) and credentials. You hardcode the service name via IdrClient.forService("ollama") at dev time.',
+      },
+      {
+        q: 'CSP requirements?',
+        a: 'connect-src https://idr.to wss://idr.to; WebRTC needs no extra directive in most browsers.',
+      },
+      {
+        q: 'Mobile apps?',
+        a: 'Use idr_dart_sdk with shipped libidr_sdk per platform. Flutter example included; same agent capabilities as CLI.',
+      },
+      {
+        q: 'Can users paste *.idr.to hostnames in my app?',
+        a: 'Browser SDK rejects opaque DEF/hash labels for local parsing. Use .idr synthetic or idrto: URIs, or resolve via your backend if you store label mappings.',
+      },
+    ],
+  },
+  {
+    id: 'enduser',
+    title: 'End users & delegates',
+    items: [
+      {
+        q: 'I received an access key — what do I do?',
+        a: 'Open the ISV app auth panel, choose Access key, paste idr_ak_…. Enter the target host your admin provided. The SDK handles the rest.',
+      },
+      {
+        q: 'Why is the target offline?',
+        a: 'The target agent must be running and connected to signaling. idr.to does not wake sleeping devices in v1 — start the agent on the edge device.',
+      },
+      {
+        q: 'Is my traffic encrypted?',
+        a: 'WebRTC data channels use DTLS/SCTP. SSH and HTTPS inside the tunnel retain their own encryption. idr.to signaling servers do not decrypt P2P application payloads.',
+      },
+      {
+        q: 'What does the 30-day trial include?',
+        a: 'Signaling, registry, ACLs, and P2P connectivity. No relay data bundles — purchase after trial if you need TURN or HTTPS relay.',
+      },
+    ],
+  },
+  {
+    id: 'billing',
+    title: 'Billing & pricing',
+    items: [
+      {
+        q: 'What does Personal US$5/year include?',
+        a: 'Single-level host namespace, 5 devices per user, signaling, STUN, P2P data plane. Data transfer bundles sold separately.',
+      },
+      {
+        q: 'Enterprise pricing?',
+        a: 'US$5 per user per month or US$50 per user per year. Multi-level hosts, cross-entity ACLs, 5 devices per user.',
+      },
+      {
+        q: 'How do data bundles work?',
+        a: 'US$10 per 500 GB. Stackable subscriptions. Unused quota rolls over monthly for up to 12 months. Applies to TURN and HTTPS relay mux.',
+      },
+      {
+        q: 'Will I be charged for P2P traffic?',
+        a: 'No. Direct WebRTC between peers does not consume data bundles.',
+      },
+      {
+        q: 'What happens when my trial ends?',
+        a: 'Signaling stops until you purchase Personal or Enterprise. P2P-only targets remain the default path when no relay bundle is active.',
+      },
+    ],
+  },
+  {
+    id: 'security',
+    title: 'Security & compliance',
+    items: [
+      {
+        q: 'How is device identity established?',
+        a: 'Ed25519 keypairs generated on-device. Device-ID is derived from the public key. Host registration requires proof of entity authority.',
+      },
+      {
+        q: 'Does idr.to store my LLM prompts or SSH sessions?',
+        a: 'Not on the P2P path. Relay paths carry encrypted bytes; pass-through TLS mode does not terminate customer TLS on 443.',
+      },
+      {
+        q: 'TLS on HTTPS relay?',
+        a: 'Default pass-through: relay reads SNI only and pipes ciphertext to the agent. Optional HTTP-aware mode terminates TLS at the edge for path routing.',
+      },
+      {
+        q: 'Audit logs?',
+        a: 'Resolve and ACL decisions are auditable on Enterprise. Connection metadata logged; payload bytes are not.',
+      },
+    ],
+  },
+];
+---
+
+<Layout title="FAQ — idr.to">
+  <Header slot="header" />
+  <Footer slot="footer" />
+
+  <section class="section">
+    <div class="container">
+      <p class="eyebrow">Help</p>
+      <h1>Frequently asked questions</h1>
+      <p class="lead">Detailed answers by persona. For protocol specifics, see GitHub openspec and client docs linked from the footer.</p>
+
+      <nav class="faq-nav" aria-label="FAQ sections">
+        {personas.map((p) => (
+          <a href={`#${p.id}`}>{p.title}</a>
+        ))}
+      </nav>
+
+      {personas.map((persona) => (
+        <section class="faq-section" id={persona.id}>
+          <h2>{persona.title}</h2>
+          {persona.items.map((item) => (
+            <article class="faq-item">
+              <h3>{item.q}</h3>
+              <p>{item.a}</p>
+            </article>
+          ))}
+        </section>
+      ))}
+
+      <div class="callout" style="margin-top: 2rem;">
+        <strong>Additional topics in repo docs:</strong> device bootstrap bundles, ACME on https-relay,
+        mesh relay QUIC (operator), billing attestation JWT for TURN, UDP over WebRTC semantics,
+        round-robin multi-device hosts, and portal read-only UI (Enterprise).
+      </div>
+    </div>
+  </section>
+</Layout>
+
+<style>
+  h1 { font-size: 2.25rem; margin: 0 0 1rem; }
+  .faq-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin: 2rem 0;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .faq-nav a {
+    font-size: 0.8125rem;
+    padding: 0.35rem 0.75rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    color: var(--text-muted);
+    text-decoration: none;
+  }
+  .faq-nav a:hover {
+    color: var(--accent);
+    border-color: var(--accent);
+  }
+  .faq-section h2 {
+    font-size: 1.375rem;
+    margin: 2.5rem 0 0.5rem;
+    padding-top: 1rem;
+  }
+  .faq-section:first-of-type h2 { margin-top: 0; }
+</style>
