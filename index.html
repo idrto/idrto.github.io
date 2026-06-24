@@ -129,7 +129,55 @@
             <p>Maintains persistent WebSocket; dials local services on incoming tunnels.</p>
           </div>
         </div>
-        <p class="flow__note">When P2P fails, optional <strong>TURN relay</strong> carries media through <code>turn.idr.to</code>.</p>
+        <p class="flow__note">When P2P fails, optional <strong>TURN relay</strong> carries media through <code>turn.idr.to</code>. For legacy HTTPS clients that cannot use WebRTC, operators may deploy an optional <strong>HTTPS edge relay</strong> (<code>*.idr.to</code> DEF hostnames) — application bytes still terminate on the target agent.</p>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section__inner">
+        <div class="section__header">
+          <p class="eyebrow">Deployment</p>
+          <h2 class="section__title">Three ways to reach a target</h2>
+          <p class="section__lead">Most traffic uses WebRTC peer-to-peer tunnels. Add relay capacity only when the network or client stack requires it.</p>
+        </div>
+        <ul class="features">
+          <li class="feature">
+            <h3 class="feature__title">P2P (default)</h3>
+            <p>Agents exchange SDP/ICE via <code>wss://idr.to/v1/signal</code>. Data flows over <strong>idr-tunnel-v1</strong> on a WebRTC data channel — SSH, Postgres, HTTP, and raw TCP.</p>
+          </li>
+          <li class="feature">
+            <h3 class="feature__title">TURN (optional)</h3>
+            <p>When strict NAT or firewalls block direct paths, media relays through <code>turn.idr.to</code>. Billed per entity as an add-on quota.</p>
+          </li>
+          <li class="feature">
+            <h3 class="feature__title">HTTPS edge relay (optional)</h3>
+            <p>For browsers and tools that speak ordinary HTTPS/TLS to a public hostname, operators can run the open-source <strong>https-relay</strong> stack with DEF-encoded <code>*.idr.to</code> names. The relay forwards encrypted bytes to the target agent; TLS terminates on the device.</p>
+          </li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section__inner">
+        <div class="section__header">
+          <p class="eyebrow">Deployment</p>
+          <h2 class="section__title">Three ways to reach a target</h2>
+          <p class="section__lead">Most traffic uses WebRTC peer-to-peer tunnels. Add relay capacity only when the network or client stack requires it.</p>
+        </div>
+        <ul class="features">
+          <li class="feature">
+            <h3 class="feature__title">P2P (default)</h3>
+            <p>Agents exchange SDP/ICE via <code>wss://idr.to/v1/signal</code>. Data flows over <strong>idr-tunnel-v1</strong> on a WebRTC data channel — SSH, Postgres, HTTP, and raw TCP.</p>
+          </li>
+          <li class="feature">
+            <h3 class="feature__title">TURN (optional)</h3>
+            <p>When strict NAT or firewalls block direct paths, media relays through <code>turn.idr.to</code>. Billed per entity as an add-on quota.</p>
+          </li>
+          <li class="feature">
+            <h3 class="feature__title">HTTPS edge relay (optional)</h3>
+            <p>For browsers and tools that speak ordinary HTTPS/TLS to a public hostname, operators can run the open-source <strong>https-relay</strong> stack with DEF-encoded <code>*.idr.to</code> names. The relay forwards encrypted bytes to the target agent; TLS terminates on the device.</p>
+          </li>
+        </ul>
       </div>
     </section>
 
@@ -141,7 +189,11 @@
         </div>
         <div class="examples">
           <figure class="example">
-            <figcaption class="example__caption">Canonical URI</figcaption>
+            <figcaption class="example__caption">Canonical URI (v2)</figcaption>
+            <pre class="code"><code>idrto:user-40example.com/--/laptop/22</code></pre>
+          </figure>
+          <figure class="example">
+            <figcaption class="example__caption">Canonical URI (v1)</figcaption>
             <pre class="code"><code>idrto:user@example.com/laptop/22</code></pre>
           </figure>
           <figure class="example">
