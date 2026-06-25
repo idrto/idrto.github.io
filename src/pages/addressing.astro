@@ -173,19 +173,6 @@ idrto:api~corp.com/443/v1/health?verbose=1</code></pre>
         </table>
       </div>
 
-      <h2>Mirror HTTPS (metadata API)</h2>
-      <pre><code>https://idr.to/&lt;host&gt;~&lt;url-encoded-entity-id&gt;/&lt;service-or-port&gt;[/path][?query]</code></pre>
-      <p>
-        Same logical target as <code>idrto:</code>, with percent-encoding instead of idr-escape for the entity.
-        Used for browser <code>fetch</code>, OpenAPI metadata routes, and tooling that prefers HTTPS URLs.
-        Hits the <strong>hosted idr.to API</strong> — returns JSON for connection setup, not proxied application bytes.
-      </p>
-      <pre><code>https://idr.to/laptop~user%40example.com/ollama
-https://idr.to/laptop~user%40example.com/443/api/v1?source_host=workstation</code></pre>
-      <div class="callout">
-        Mirror URLs are <strong>not</strong> DEF hostnames. They use path-based routing on the apex <code>idr.to</code> host.
-      </div>
-
       <h2>DEF encoding (<code>*.idr.to</code> relay)</h2>
       <p>
         For public HTTPS ingress via the optional <a href="https://github.com/idrto/https-relay">https-relay</a>,

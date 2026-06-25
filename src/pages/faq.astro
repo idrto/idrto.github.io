@@ -48,7 +48,7 @@ const personas = [
     items: [
       {
         q: 'Which URI form should I use in scripts?',
-        a: 'Prefer idrto: URIs internally (idrto:laptop~user-40example.com/ssh). Use *.idr synthetic hostnames for SSH ProxyCommand and psql. Use https://idr.to/… for browser metadata fetch. Use *.idr.to DEF URLs only for HTTPS relay ingress.',
+        a: 'Prefer idrto: URIs internally (idrto:laptop~user-40example.com/ssh). Use *.idr synthetic hostnames for SSH ProxyCommand and psql. Use *.idr.to DEF URLs for HTTPS relay ingress when P2P is unavailable.',
       },
       {
         q: 'How do I connect with SSH, Postgres, or HTTP?',
@@ -164,7 +164,7 @@ const personas = [
       },
       {
         q: 'TLS on HTTPS relay?',
-        a: 'Default pass-through: relay reads SNI only and pipes ciphertext to the agent. Your nginx or app on the target terminates TLS with a locally stored certificate. Optional HTTP-aware mode terminates TLS at the edge for path routing only.',
+        a: 'TLS pass-through: the relay reads SNI only and pipes ciphertext to the agent. Your nginx or app on the target terminates TLS with a locally stored certificate.',
       },
       {
         q: 'Audit logs?',
