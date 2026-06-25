@@ -58,10 +58,86 @@ import Footer from '../components/Footer.astro';
         </table>
       </div>
       <p>
-        Multiple machines (Device-IDs) may register the same host name — <code>POST /resolve</code> round-robins
-        among online devices bound to that Host-Identity, similar to multiple A records for one DNS name.
-        See <a href="/get-started">get started</a> for registration commands.
+        Multiple machines (Device-IDs) may register the <strong>same</strong> host name — resolve round-robins
+        among them (see advanced note below). The usual pattern is <strong>one host name per physical device</strong>
+        under the same entity-id.
       </p>
+
+      <h2 id="multiple-devices">One user, up to five devices</h2>
+      <p>
+        A Personal or Enterprise subscription covers <strong>one user</strong> and up to <strong>five registered
+        machines</strong> (five Device-IDs). All devices share the same <strong>entity-id</strong> (your account).
+        Give each machine its own <strong>host</strong> label so every device has a distinct, globally addressable
+        Host-Identity:
+      </p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Machine</th>
+              <th>Host</th>
+              <th>Host-Identity</th>
+              <th>Example idrto URI</th>
+              <th>Synthetic FQHN</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Work laptop</td>
+              <td><code>laptop</code></td>
+              <td><code>laptop~user@example.com</code></td>
+              <td><code>idrto:laptop~user-40example.com/ssh</code></td>
+              <td><code>laptop.user-40example-2Ecom.idr</code></td>
+            </tr>
+            <tr>
+              <td>M4 Mac mini (Ollama)</td>
+              <td><code>m4mini</code></td>
+              <td><code>m4mini~user@example.com</code></td>
+              <td><code>idrto:m4mini~user-40example.com/ollama</code></td>
+              <td><code>m4mini.user-40example-2Ecom.idr</code></td>
+            </tr>
+            <tr>
+              <td>Android phone</td>
+              <td><code>mobile1</code></td>
+              <td><code>mobile1~user@example.com</code></td>
+              <td><code>idrto:mobile1~user-40example.com/ssh</code></td>
+              <td><code>mobile1.user-40example-2Ecom.idr</code></td>
+            </tr>
+            <tr>
+              <td>iPhone</td>
+              <td><code>mobile-apple</code></td>
+              <td><code>mobile-apple~user@example.com</code></td>
+              <td><code>idrto:mobile-apple~user-40example.com/ssh</code></td>
+              <td><code>mobile-apple.user-40example-2Ecom.idr</code></td>
+            </tr>
+            <tr>
+              <td>Home desktop</td>
+              <td><code>desktop</code></td>
+              <td><code>desktop~user@example.com</code></td>
+              <td><code>idrto:desktop~user-40example.com/443</code></td>
+              <td><code>desktop.user-40example-2Ecom.idr</code></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        Each row is a separate physical device with its own Device-ID and Ed25519 keypair. You connect to a
+        <em>specific</em> machine by naming its host — e.g. SSH to the Mac mini:
+        <code>ssh user@m4mini.user-40example-2Ecom.idr</code>, not to a generic “my account” alias.
+      </p>
+      <pre><code># On the Mac mini (device 2 of 5) — same entity, different host
+idr auth login                    # entity user@example.com
+idr device register --name m4mini
+idr host register m4mini          # Host-Identity m4mini~user@example.com
+idr agent run
+
+# From your laptop — reach the mini's Ollama
+idr connect m4mini.user-40example-2Ecom.idr 11434 --local-port 11434</code></pre>
+      <div class="callout">
+        <strong>Advanced:</strong> You may register multiple Device-IDs under the <em>same</em> host (e.g. two
+        <code>m4mini</code> boxes for HA). <code>POST /resolve</code> then round-robins among online devices, like
+        multiple A records. Most users prefer distinct host names as in the table above.
+      </div>
 
       <h2>Canonical idrto URI</h2>
       <pre><code>idrto:&lt;host&gt;~&lt;entity-id&gt;/&lt;service-or-port&gt;[/&lt;path…&gt;][?query]</code></pre>

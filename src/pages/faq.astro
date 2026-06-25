@@ -14,7 +14,7 @@ const personas = [
       },
       {
         q: 'How many devices can I register?',
-        a: 'Each user subscription (Personal or Enterprise) includes up to five devices. Multiple devices can share the same host name — resolve round-robins among them like DNS.',
+        a: 'Up to five machines (Device-IDs) per user subscription. The usual pattern is one host name per device under the same entity-id — e.g. laptop~user@example.com, m4mini~user@example.com, mobile1~user@example.com, mobile-apple~user@example.com, and desktop~user@example.com. Each host is a distinct Host-Identity; SSH or idr connect targets that host to reach that specific machine. Optionally, multiple devices can share one host name and resolve round-robins among them. See the multiple-devices section on the addressing page.',
       },
       {
         q: 'Personal vs Enterprise host naming?',

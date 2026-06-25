@@ -4,6 +4,21 @@ import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 
 const installCmd = `curl -fsSL https://download.idr.to/install.sh | bash`;
+
+const multiDeviceExample = `# Device 1 — work laptop (host: laptop)
+idr auth login
+idr device register --name laptop
+idr host register laptop
+idr agent run
+
+# Device 2 — M4 Mac mini at home (host: m4mini)
+idr device register --name m4mini
+idr host register m4mini
+idr agent run
+
+# Device 3 — Android (host: mobile1) … up to 5 devices per user
+# Each machine: unique Device-ID, unique host → unique Host-Identity
+# All share entity-id user@example.com`;
 ---
 
 <Layout title="Get started — CLI, onboarding & protocols — idr.to" description="Install the idr CLI, onboard devices, and route HTTP, HTTPS, SSH, and Postgres over idr.to P2P tunnels.">
@@ -87,7 +102,30 @@ idr agent run</code></pre>
         Run Ollama, Postgres, sshd, nginx, or any service on localhost — the agent forwards tunneled connections.
         The <strong>entity-id</strong> is globally unique; <strong>host</strong> is unique within that entity —
         together they form the addressable <strong>Host-Identity</strong>. Each machine has a
-        <strong>Device-ID</strong> (like IP in IP routing). See <a href="/addressing">addressing</a>.
+        <strong>Device-ID</strong> (like IP in IP routing). See <a href="/addressing#multiple-devices">one user, five devices</a>.
+      </p>
+
+      <h2 id="multiple-devices">Multiple devices (same user)</h2>
+      <p>
+        One subscription includes up to <strong>five machines</strong>. Use the same <code>entity-id</code> on every
+        device, but register a <strong>different host</strong> on each so clients know which box to reach:
+      </p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Host-Identity</th><th>Typical use</th></tr></thead>
+          <tbody>
+            <tr><td><code>laptop~user@example.com</code></td><td>Portable dev machine</td></tr>
+            <tr><td><code>m4mini~user@example.com</code></td><td>Home Ollama / edge server</td></tr>
+            <tr><td><code>mobile1~user@example.com</code></td><td>Android agent</td></tr>
+            <tr><td><code>mobile-apple~user@example.com</code></td><td>iPhone agent</td></tr>
+            <tr><td><code>desktop~user@example.com</code></td><td>Fixed workstation</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <pre><code>{multiDeviceExample}</code></pre>
+      <p>
+        Connect to a specific device by its host — e.g.
+        <code>ssh user@m4mini.user-40example-2Ecom.idr</code> reaches the Mac mini, not your laptop.
       </p>
 
       <h2>3b. Optional — TLS certificates on the edge</h2>
