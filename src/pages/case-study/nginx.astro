@@ -38,7 +38,7 @@ cargo run --example acme_agent -- \\
       <h1>Node.js + nginx on a home lab.<br />Public HTTPS without port forwarding.</h1>
       <p class="lead">
         Run a standard Express or Next.js API on <code>127.0.0.1:3000</code>, front it with nginx for TLS on the
-        target machine, and reach it from anywhere using your device FQHN — with automatic Let's Encrypt renewal and
+        target machine, and reach it from anywhere using your Host-Identity FQHN — with automatic Let's Encrypt renewal and
         keys that never leave the box.
       </p>
 
@@ -53,14 +53,14 @@ cargo run --example acme_agent -- \\
         <li>Zero exposure of the Node process to the raw internet</li>
       </ul>
 
-      <h2>Device-Identity &amp; FQHN</h2>
-      <p>When the mini-PC registers as a target:</p>
+      <h2>Host-Identity &amp; FQHN</h2>
+      <p>When the mini-PC registers host <code>app.us-east</code> under entity <code>acme.com</code>:</p>
       <div class="table-wrap">
         <table>
           <thead><tr><th>Concept</th><th>Value for this deployment</th></tr></thead>
           <tbody>
-            <tr><td><strong>Device-Identity</strong></td><td>Ed25519-derived Device-ID (unique per machine)</td></tr>
-            <tr><td><strong>Host name</strong></td><td><code>app.us-east</code> (registered under entity <code>acme.com</code>)</td></tr>
+            <tr><td><strong>Host-Identity</strong></td><td><code>app.us-east~acme.com</code></td></tr>
+            <tr><td><strong>Device-ID</strong></td><td>120-bit routing ID for this mini-PC (from Ed25519 pubkey)</td></tr>
             <tr><td><strong>Synthetic FQHN</strong></td><td><code>app.us-east.user-40acme-2Ecom.idr</code></td></tr>
             <tr><td><strong>DEF FQHN (relay)</strong></td><td><code>dapp-2eus-2deast-7eacme-2ecom.idr.to</code></td></tr>
             <tr><td><strong>Canonical URI</strong></td><td><code>idrto:app.us-east~acme.com/443</code></td></tr>
@@ -68,8 +68,9 @@ cargo run --example acme_agent -- \\
         </table>
       </div>
       <p>
-        The FQHN is globally addressable through idr.to resolution — no customer DNS zone required for P2P.
-        For plain HTTPS clients, wildcard <code>*.idr.to</code> A/AAAA records point at your relay cluster.
+        The Host-Identity is globally unique and addressable; DEF encoding produces a globally routable FQHN.
+        No customer DNS zone is required for P2P. For plain HTTPS clients, wildcard <code>*.idr.to</code> A/AAAA
+        records point at your relay cluster.
       </p>
 
       <h2>Architecture</h2>
@@ -102,8 +103,9 @@ idr device register --name office-mini
 idr host register app.us-east
 idr agent run   # persistent target agent</code></pre>
       <p>
-        The agent receives a <strong>Device-Identity</strong> tied to its Ed25519 keypair. Host
-        <code>app.us-east</code> maps to this device in the registry.
+        <code>idr device register</code> assigns a <strong>Device-ID</strong> (routing address) to this machine.
+        <code>idr host register app.us-east</code> forms the <strong>Host-Identity</strong>
+        <code>app.us-east~acme.com</code> and binds this Device-ID to it in the registry.
       </p>
 
       <h2>Step 2 — Run Node.js on loopback</h2>
@@ -128,7 +130,7 @@ node dist/server.js   # listens on 127.0.0.1:3000</code></pre>
       </p>
       <pre><code>{acmeCmd}</code></pre>
       <ol>
-        <li>Agent registers the challenge token with the relay (authorized to its <code>host~entity</code> identity).</li>
+        <li>Agent registers the challenge token with the relay (authorized to its Host-Identity <code>host~entity-id</code>).</li>
         <li>Let's Encrypt hits <code>http://&lt;def-fqhn&gt;/.well-known/acme-challenge/…</code> on port 80.</li>
         <li>Relay serves the token; LE validates domain control.</li>
         <li>Certificate and <strong>private key PEM files are written on the target</strong> — never uploaded to idr.to.</li>
@@ -175,7 +177,7 @@ curl -vk --resolve app.us-east.user-40acme-2Ecom.idr:443:127.0.0.1 \\
       <h2>Results</h2>
       <p>
         Acme's customer runs an unmodified Node stack behind nginx — the same layout they'd use on a VPS — but without
-        opening inbound ports or sharing TLS keys with a SaaS vendor. idr.to provides identity, FQHN, and optional
+        opening inbound ports or sharing TLS keys with a SaaS vendor. idr.to provides Host-Identity, FQHN, and optional
         relay ingress; application bytes and keys remain on the edge device.
       </p>
 

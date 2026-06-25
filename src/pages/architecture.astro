@@ -24,7 +24,7 @@ import Footer from '../components/Footer.astro';
           <h3>Registry &amp; policy</h3>
           <ul>
             <li>Entity and device registration</li>
-            <li>Host → Device-ID mappings</li>
+            <li>Host-Identity → Device-ID mappings</li>
             <li>ACL evaluation at <code>POST /resolve</code></li>
             <li>OIDC login, access keys, billing entitlements</li>
           </ul>
@@ -89,7 +89,7 @@ import Footer from '../components/Footer.astro';
       </p>
       <ol>
         <li>Client connects to <code>https://&lt;def-label&gt;.idr.to/443/…</code></li>
-        <li>Relay reads TLS SNI, DEF-decodes identity locator</li>
+        <li>Relay reads TLS SNI and DEF-decodes the Host-Identity</li>
         <li>Encrypted bytes pipe over agent WebSocket mux to on-prem service</li>
       </ol>
       <div class="callout callout--warn">
@@ -110,8 +110,8 @@ import Footer from '../components/Footer.astro';
 
       <h2>Security properties</h2>
       <ul>
-        <li><strong>Device-Identity</strong> — Ed25519 keypair generated on-device; Device-ID derived from public key (first 120 bits of SHA-256)</li>
-        <li><strong>FQHN</strong> — each registered host receives globally resolvable names (<code>*.idr</code>, <code>idrto:</code>, optional <code>*.idr.to</code> DEF)</li>
+        <li><strong>Host-Identity</strong> — <code>host~entity-id</code>: entity-id is globally unique; host is unique within the entity; together globally addressable. DEF encoding → FQHN for DNS routing.</li>
+        <li><strong>Device-ID</strong> — 120-bit routing address derived from on-device Ed25519 public key (first 120 bits of SHA-256); analogous to IP in IP-based routing</li>
         <li>Same-entity access allowed by default; cross-entity requires explicit ACL rows</li>
         <li><strong>TLS pass-through</strong> — HTTPS relay on port 443 reads SNI only and pipes ciphertext to the target agent; idr.to never terminates customer TLS in default mode</li>
         <li><strong>Let's Encrypt on target</strong> — ACME HTTP-01 via relay challenges; certificate and private key PEM files written locally on the edge device and renewed automatically — never uploaded to idr.to</li>

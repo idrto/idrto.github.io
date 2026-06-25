@@ -29,8 +29,8 @@ const personas = [
         a: 'Create an explicit ACL allow rule (Enterprise). Same-entity access works by default without extra configuration.',
       },
       {
-        q: 'What is a Device-Identity vs a host FQHN?',
-        a: 'Device-Identity is the cryptographic ID of a physical machine (Ed25519 → Device-ID). A host name (e.g. gpu-a.us-east) is a logical label registered to one or more devices. The FQHN (e.g. gpu-a.us-east.user-40acme-2Ecom.idr or DEF *.idr.to form) is how clients address that host globally.',
+        q: 'What is Host-Identity vs Device-ID vs FQHN?',
+        a: 'Host-Identity is host~entity-id: entity-id is globally unique, host is unique within that entity, so the pair is globally unique and addressable. Device-ID is a separate 120-bit routing address (from Ed25519 pubkey) — analogous to IP in IP-based routing. FQHN is the globally routable hostname form (synthetic *.idr or DEF-encoded *.idr.to) derived from the Host-Identity.',
       },
       {
         q: 'Where do TLS private keys live?',
@@ -152,7 +152,7 @@ const personas = [
     items: [
       {
         q: 'How is device identity established?',
-        a: 'Ed25519 keypairs generated on-device at registration. Device-Identity (Device-ID) is derived from the public key. Each registered host receives a globally addressable FQHN. Host registration requires proof of entity authority.',
+        a: 'Ed25519 keypairs generated on-device at registration. Device-ID (120 bits, from public key) is the routing address. Host registration forms Host-Identity (host~entity-id) and FQHN; multiple Device-IDs may bind to one host. Requires proof of entity authority.',
       },
       {
         q: 'Automatic SSL certificates?',

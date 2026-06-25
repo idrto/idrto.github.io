@@ -106,14 +106,14 @@ idr connect gpu-a.us-east.user-40acme-2Ecom.idr 11434 --local-port 11434`;
         <li>Optional public HTTPS URL for integrations that cannot use WebRTC</li>
       </ul>
 
-      <h2>Device-Identity &amp; globally addressable FQHN</h2>
-      <p>When the Mac Mini registers:</p>
+      <h2>Host-Identity &amp; FQHN</h2>
+      <p>When the Mac Mini registers host <code>gpu-a.us-east</code> under entity <code>acme.com</code>:</p>
       <div class="table-wrap">
         <table>
-          <thead><tr><th>Artifact</th><th>Example</th></tr></thead>
+          <thead><tr><th>Concept</th><th>Example</th></tr></thead>
           <tbody>
-            <tr><td><strong>Device-Identity</strong></td><td>Unique Device-ID from on-device Ed25519 keypair</td></tr>
-            <tr><td><strong>Registered host</strong></td><td><code>gpu-a.us-east</code> under entity <code>acme.com</code></td></tr>
+            <tr><td><strong>Host-Identity</strong></td><td><code>gpu-a.us-east~acme.com</code></td></tr>
+            <tr><td><strong>Device-ID</strong></td><td>120-bit routing ID for this Mac Mini (from Ed25519 pubkey)</td></tr>
             <tr><td><strong>Synthetic FQHN</strong></td><td><code>gpu-a.us-east.user-40acme-2Ecom.idr</code></td></tr>
             <tr><td><strong>Canonical URI</strong></td><td><code>idrto:gpu-a.us-east~acme.com/ollama</code></td></tr>
             <tr><td><strong>DEF FQHN (relay)</strong></td><td><code>dgpu-a-2eus-2deast-7eacme-2ecom.idr.to</code></td></tr>
@@ -121,9 +121,10 @@ idr connect gpu-a.us-east.user-40acme-2Ecom.idr 11434 --local-port 11434`;
         </table>
       </div>
       <p>
-        Every device gets its own <strong>Device-Identity</strong>; every registered host gets an
-        <strong>FQHN</strong> resolvable worldwide through idr.to. Multiple Mac Minis can share a host name —
-        resolve round-robins like DNS A records.
+        The <strong>entity-id</strong> is globally unique; <strong>host</strong> is unique within that entity —
+        together they form a globally addressable Host-Identity. DEF encoding makes it routable as an FQHN.
+        Each physical machine has its own Device-ID (like an IP address in IP routing). Multiple Mac Minis can
+        register the same host — resolve round-robins among their Device-IDs.
       </p>
 
       <h2>Architecture</h2>
@@ -150,13 +151,13 @@ Optional HTTPS relay (metered): curl → *.idr.to DEF FQHN → TLS pass-through 
         HTTPS on Ollama behind nginx, Let's Encrypt private keys stay on the Mac Mini — same pass-through semantics.
       </div>
 
-      <h2>Step 1 — Subscribe, Device-Identity &amp; host registration</h2>
+      <h2>Step 1 — Subscribe, register host &amp; device</h2>
       <ol>
         <li>Create Enterprise entity <code>acme.com</code> (multi-level hosts for <code>gpu-a.us-east</code>).</li>
         <li>Install CLI: <code>curl -fsSL https://download.idr.to/install.sh | bash</code></li>
         <li>On the Mac Mini: <code>idr auth login admin@acme.com</code></li>
-        <li>Register device (creates <strong>Device-Identity</strong>): <code>idr device register --name mac-mini-m4</code></li>
-        <li>Register host (creates <strong>FQHN</strong> mapping): <code>idr host register gpu-a.us-east</code></li>
+        <li>Register device (assigns <strong>Device-ID</strong>): <code>idr device register --name mac-mini-m4</code></li>
+        <li>Register host (forms <strong>Host-Identity</strong> + FQHN): <code>idr host register gpu-a.us-east</code></li>
         <li>Start target agent: <code>idr agent run</code> (or launchd — see below)</li>
         <li>Install Ollama: <code>brew install ollama && ollama serve</code></li>
         <li>Pull models: <code>ollama pull llama3.2 && ollama pull nomic-embed-text</code></li>
@@ -205,7 +206,7 @@ Optional HTTPS relay (metered): curl → *.idr.to DEF FQHN → TLS pass-through 
       <pre><code>{ragPipeline}</code></pre>
       <p>
         A local Chroma or sqlite-vec instance on <code>127.0.0.1:8000</code> can be exposed with
-        <code>idrto:gpu-a.us-east~acme.com/8000</code> — same Device-Identity and FQHN, different port segment.
+        <code>idrto:gpu-a.us-east~acme.com/8000</code> — same Host-Identity and FQHN, different port segment.
       </p>
 
       <h2>Step 6 — Delegate access with access keys</h2>
@@ -237,7 +238,7 @@ Optional HTTPS relay (metered): curl → *.idr.to DEF FQHN → TLS pass-through 
         </div>
         <div class="card">
           <h3>Security</h3>
-          <p>Device-Identity per machine; ACLs at resolve; prompts never stored on idr.to; no inbound ports.</p>
+          <p>Host-Identity + Device-ID binding; ACLs at resolve; prompts never stored on idr.to; no inbound ports.</p>
         </div>
         <div class="card">
           <h3>Cost</h3>

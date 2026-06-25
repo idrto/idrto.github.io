@@ -30,8 +30,8 @@ const studies = [
       <p class="eyebrow">Real deployments</p>
       <h1>Case studies</h1>
       <p class="lead">
-        Each registered device receives a cryptographic <strong>Device-Identity</strong> and a globally addressable
-        <strong>FQHN</strong>. Workloads stay on your hardware; idr.to coordinates access and optional relay paths.
+        Each registered <strong>Host-Identity</strong> (<code>host~entity-id</code>) receives a globally routable
+        <strong>FQHN</strong> after DEF encoding. Each machine has a separate <strong>Device-ID</strong> for routing. Workloads stay on your hardware; idr.to coordinates access and optional relay paths.
         TLS private keys never leave the target — SSL is pass-through end-to-end.
       </p>
 
@@ -47,9 +47,9 @@ const studies = [
       </div>
 
       <div class="callout" style="margin-top: 2rem;">
-        <strong>Common pattern:</strong> install a target agent on the edge machine, register a host name, run your
-        service on loopback, and connect via P2P (free) or HTTPS relay (metered). See
-        <a href="/get-started">get started</a> and <a href="/addressing">addressing</a> for FQHN formats.
+        <strong>Common pattern:</strong> install a target agent, register a host name within your entity to form a
+        <strong>Host-Identity</strong>, run your service on loopback, and connect via P2P (free) or HTTPS relay
+        (metered). See <a href="/get-started">get started</a> and <a href="/addressing">addressing</a> for FQHN formats.
       </div>
     </div>
   </section>

@@ -79,13 +79,15 @@ idr device register --name laptop</code></pre>
 
       <h2>3. Run the target agent (on-prem)</h2>
       <p>On the machine that hosts your workload (Mac Mini, Linux server, etc.):</p>
-      <pre><code>idr host register laptop   # assigns globally addressable FQHN to this Device-Identity
+      <pre><code>idr device register --name office-pc   # Device-ID for this machine
+idr host register laptop               # Host-Identity host~entity-id → FQHN
 idr agent run</code></pre>
       <p>
         Keeps a persistent WebSocket to <code>wss://idr.to/v1/signal</code> so sources can reach you.
         Run Ollama, Postgres, sshd, nginx, or any service on localhost — the agent forwards tunneled connections.
-        Each device has a unique <strong>Device-Identity</strong>; each registered host gets an
-        <strong>FQHN</strong> (see <a href="/addressing">addressing</a>).
+        The <strong>entity-id</strong> is globally unique; <strong>host</strong> is unique within that entity —
+        together they form the addressable <strong>Host-Identity</strong>. Each machine has a
+        <strong>Device-ID</strong> (like IP in IP routing). See <a href="/addressing">addressing</a>.
       </p>
 
       <h2>3b. Optional — TLS certificates on the edge</h2>

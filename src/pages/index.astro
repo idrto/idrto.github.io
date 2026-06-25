@@ -15,8 +15,8 @@ import Footer from '../components/Footer.astro';
       <p class="lead">
         <strong>idr.to</strong> is a hosted identity and signaling service for <strong>ID-based routing (IDR)</strong>.
         Run workloads on hardware you control — Mac minis, GPU servers, factory PLCs — and reach them from anywhere
-        with stable names, cryptographic <strong>Device-Identity</strong>, and a globally addressable
-        <strong>FQHN</strong> per registered host. Application data travels peer-to-peer whenever the network allows;
+        with a globally addressable <strong>Host-Identity</strong> (<code>host~entity-id</code>) and per-machine
+        <strong>Device-ID</strong> for routing. Application data travels peer-to-peer whenever the network allows;
         our servers coordinate discovery, not your bytes.
       </p>
       <div class="hero__actions">
@@ -47,31 +47,33 @@ import Footer from '../components/Footer.astro';
 
   <section class="section">
     <div class="container">
-      <p class="eyebrow">Device-Identity &amp; TLS</p>
-      <h2>Every device gets an identity. Every host gets a global name.</h2>
+      <p class="eyebrow">Host-Identity &amp; TLS</p>
+      <h2>Every host gets a global name. Every machine gets a routing ID.</h2>
       <div class="card-grid card-grid--2">
         <div class="card">
-          <h3>Device-Identity</h3>
+          <h3>Host-Identity</h3>
           <p>
-            On registration, each machine generates an Ed25519 keypair locally. The derived
-            <strong>Device-ID</strong> is its cryptographic identity — used for host binding, ACL checks, and
-            signaling auth. Keys never leave the device.
-          </p>
-        </div>
-        <div class="card">
-          <h3>Globally addressable FQHN</h3>
-          <p>
-            Register a host (e.g. <code>gpu-a.us-east</code>) and receive stable names:
-            synthetic <code>*.idr</code>, canonical <code>idrto:</code> URIs, mirror
-            <code>https://idr.to/…</code>, and optional DEF <code>*.idr.to</code> for HTTPS relay ingress.
+            <code>host~entity-id</code> — the <strong>entity-id</strong> is globally unique; the
+            <strong>host</strong> is unique within that entity. Together they form a globally unique,
+            addressable <strong>Host-Identity</strong>. DEF encoding yields a globally routable
+            <strong>FQHN</strong> (synthetic <code>*.idr</code> or <code>*.idr.to</code> DEF label).
           </p>
           <p><a href="/addressing">Addressing profiles →</a></p>
+        </div>
+        <div class="card">
+          <h3>Device-ID</h3>
+          <p>
+            Each physical machine has a 120-bit <strong>Device-ID</strong> derived from its on-device Ed25519
+            public key. In ID-based routing, Device-ID plays the same role as an IP address in IP-based routing —
+            the registry resolves a Host-Identity to one or more online Device-IDs. Keys never leave the device.
+          </p>
         </div>
         <div class="card">
           <h3>Let's Encrypt on the edge</h3>
           <p>
             Target agents can automatically obtain and renew TLS certificates from Let's Encrypt via ACME HTTP-01
-            through the optional <code>https-relay</code>. Challenge registration uses the device's identity locator.
+            through the optional <code>https-relay</code>. Challenge registration uses the Host-Identity
+            (<code>host~entity-id</code>).
           </p>
         </div>
         <div class="card">
@@ -93,9 +95,9 @@ import Footer from '../components/Footer.astro';
       <h2>DNS gives you names. idr.to gives you <em>reachable</em> on-prem devices.</h2>
       <p>
         Traditional DNS resolves hostnames to IP addresses. That breaks when devices sit behind NAT, rotate networks,
-        or must not expose public ports. idr.to maps a canonical <strong>identity locator</strong>
-        (<code>host~entity-id</code>) to a cryptographically derived <strong>Device-ID</strong>, then uses WebRTC
-        to establish direct data channels between authorized peers.
+        or must not expose public ports. idr.to resolves a <strong>Host-Identity</strong>
+        (<code>host~entity-id</code>) to one or more <strong>Device-IDs</strong> (120-bit routing addresses, analogous
+        to IP), then uses WebRTC to establish direct data channels between authorized peers.
       </p>
       <div class="card-grid card-grid--3" style="margin-top: 2rem;">
         <div class="card">

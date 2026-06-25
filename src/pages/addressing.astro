@@ -13,48 +13,54 @@ import Footer from '../components/Footer.astro';
       <p class="eyebrow">v1 grammar</p>
       <h1>Addressing profiles</h1>
       <p class="lead">
-        idr.to v1 uses a single logical model: <strong>host~entity-id</strong> identifies the device;
-        <strong>service-or-port</strong> selects the local workload. Four surface forms exist for different clients.
-        Each physical machine also holds a unique <strong>Device-Identity</strong> (Device-ID); each registered
-        host maps to a globally addressable <strong>FQHN</strong>.
+        idr.to v1 uses a single logical model: <strong>host~entity-id</strong> is the
+        <strong>Host-Identity</strong>; <strong>service-or-port</strong> selects the local workload. Four surface
+        forms exist for different clients. Each machine also has a <strong>Device-ID</strong> (120-bit routing
+        address); DEF encoding of the Host-Identity yields a globally routable <strong>FQHN</strong>.
       </p>
 
-      <h2>Device-Identity &amp; FQHN</h2>
+      <h2>Host-Identity, Device-ID &amp; FQHN</h2>
       <div class="table-wrap">
         <table>
           <thead><tr><th>Concept</th><th>Description</th><th>Example</th></tr></thead>
           <tbody>
             <tr>
-              <td><strong>Device-Identity</strong></td>
-              <td>Ed25519 keypair on device → derived Device-ID</td>
-              <td><code>did:idr:…</code> (120-bit hash of public key)</td>
+              <td><strong>entity-id</strong></td>
+              <td>Globally unique owner namespace (email, domain, UUID)</td>
+              <td><code>acme.com</code>, <code>user@example.com</code></td>
             </tr>
             <tr>
-              <td><strong>Host name</strong></td>
-              <td>Human label within an entity namespace</td>
+              <td><strong>host</strong></td>
+              <td>Unique within an entity-id; dot-separated labels</td>
               <td><code>laptop</code>, <code>gpu-a.us-east</code></td>
             </tr>
             <tr>
-              <td><strong>Identity locator</strong></td>
-              <td><code>host~entity-id</code> — who + which machine role</td>
+              <td><strong>Host-Identity</strong></td>
+              <td><code>host~entity-id</code> — globally unique and addressable</td>
               <td><code>gpu-a.us-east~acme.com</code></td>
             </tr>
             <tr>
+              <td><strong>Device-ID</strong></td>
+              <td>120-bit ID from Ed25519 public key; routing address (like IP in IP routing)</td>
+              <td>First 120 bits of SHA-256(pubkey)</td>
+            </tr>
+            <tr>
               <td><strong>Synthetic FQHN</strong></td>
-              <td>Tool-native hostname (decoded locally)</td>
+              <td>Tool-native hostname encoding Host-Identity (decoded locally)</td>
               <td><code>gpu-a.us-east.user-40acme-2Ecom.idr</code></td>
             </tr>
             <tr>
               <td><strong>DEF FQHN</strong></td>
-              <td>DNS label under <code>*.idr.to</code> for HTTPS relay</td>
+              <td>Host-Identity DEF-encoded under <code>*.idr.to</code> — globally routable DNS</td>
               <td><code>dgpu-a-2eus-2deast-7eacme-2ecom.idr.to</code></td>
             </tr>
           </tbody>
         </table>
       </div>
       <p>
-        Multiple devices may register the same host — resolve round-robins among online Device-Identities, similar to
-        multiple A records. See <a href="/get-started">get started</a> for registration commands.
+        Multiple machines (Device-IDs) may register the same host name — <code>POST /resolve</code> round-robins
+        among online devices bound to that Host-Identity, similar to multiple A records for one DNS name.
+        See <a href="/get-started">get started</a> for registration commands.
       </p>
 
       <h2>Canonical idrto URI</h2>
@@ -107,11 +113,11 @@ https://idr.to/laptop~user%40example.com/443/api/v1?source_host=workstation</cod
       <h2>DEF encoding (<code>*.idr.to</code> relay)</h2>
       <p>
         For public HTTPS ingress via the optional <a href="https://github.com/idrto/https-relay">https-relay</a>,
-        only the <strong>identity locator</strong> is encoded into the DNS label. Service and path live in the URL path.
+        only the <strong>Host-Identity</strong> (<code>host~entity-id</code>) is encoded into the DNS label. Service and path live in the URL path.
       </p>
-      <pre><code>Identity locator:  laptop.us-east~user@example.com
+      <pre><code>Host-Identity:     laptop.us-east~user@example.com
 DEF label:         dlaptop-2eus-2deast-7euser-40example-2ecom
-FQDN:              dlaptop-2eus-2deast-7euser-40example-2ecom.idr.to
+FQDN (DEF FQHN):   dlaptop-2eus-2deast-7euser-40example-2ecom.idr.to
 HTTPS URL:         https://dlaptop-2eus-2deast-7euser-40example-2ecom.idr.to/443/api/v1</code></pre>
       <p>
         DEF is generic byte-escape: lowercase letters and digits pass through; other bytes become <code>-hh</code> (e.g. <code>~</code> → <code>-7e</code>, <code>@</code> → <code>-40</code>).
