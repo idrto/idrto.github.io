@@ -15,6 +15,46 @@ import Footer from '../components/Footer.astro';
       <p class="lead">
         idr.to v1 uses a single logical model: <strong>host~entity-id</strong> identifies the device;
         <strong>service-or-port</strong> selects the local workload. Four surface forms exist for different clients.
+        Each physical machine also holds a unique <strong>Device-Identity</strong> (Device-ID); each registered
+        host maps to a globally addressable <strong>FQHN</strong>.
+      </p>
+
+      <h2>Device-Identity &amp; FQHN</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Concept</th><th>Description</th><th>Example</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><strong>Device-Identity</strong></td>
+              <td>Ed25519 keypair on device → derived Device-ID</td>
+              <td><code>did:idr:…</code> (120-bit hash of public key)</td>
+            </tr>
+            <tr>
+              <td><strong>Host name</strong></td>
+              <td>Human label within an entity namespace</td>
+              <td><code>laptop</code>, <code>gpu-a.us-east</code></td>
+            </tr>
+            <tr>
+              <td><strong>Identity locator</strong></td>
+              <td><code>host~entity-id</code> — who + which machine role</td>
+              <td><code>gpu-a.us-east~acme.com</code></td>
+            </tr>
+            <tr>
+              <td><strong>Synthetic FQHN</strong></td>
+              <td>Tool-native hostname (decoded locally)</td>
+              <td><code>gpu-a.us-east.user-40acme-2Ecom.idr</code></td>
+            </tr>
+            <tr>
+              <td><strong>DEF FQHN</strong></td>
+              <td>DNS label under <code>*.idr.to</code> for HTTPS relay</td>
+              <td><code>dgpu-a-2eus-2deast-7eacme-2ecom.idr.to</code></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        Multiple devices may register the same host — resolve round-robins among online Device-Identities, similar to
+        multiple A records. See <a href="/get-started">get started</a> for registration commands.
       </p>
 
       <h2>Canonical idrto URI</h2>

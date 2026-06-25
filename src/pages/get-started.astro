@@ -79,10 +79,23 @@ idr device register --name laptop</code></pre>
 
       <h2>3. Run the target agent (on-prem)</h2>
       <p>On the machine that hosts your workload (Mac Mini, Linux server, etc.):</p>
-      <pre><code>idr agent run</code></pre>
+      <pre><code>idr host register laptop   # assigns globally addressable FQHN to this Device-Identity
+idr agent run</code></pre>
       <p>
         Keeps a persistent WebSocket to <code>wss://idr.to/v1/signal</code> so sources can reach you.
-        Run Ollama, Postgres, sshd, or any service on localhost — the agent forwards tunneled connections.
+        Run Ollama, Postgres, sshd, nginx, or any service on localhost — the agent forwards tunneled connections.
+        Each device has a unique <strong>Device-Identity</strong>; each registered host gets an
+        <strong>FQHN</strong> (see <a href="/addressing">addressing</a>).
+      </p>
+
+      <h2>3b. Optional — TLS certificates on the edge</h2>
+      <p>
+        For HTTPS relay ingress with browser-trusted certificates, run the ACME helper on the target (with
+        <code>https-relay</code> deployed). Let's Encrypt issues certs to your DEF FQHN; <strong>private keys are
+        written only on the target device</strong> and renewed automatically. Traffic on port 443 remains
+        pass-through — idr.to servers never hold your keys. See the
+        <a href="/case-study/nginx">nginx case study</a> or
+        <a href="https://github.com/idrto/https-relay#acme-http-01-certificate-issuance">relay ACME docs</a>.
       </p>
 
       <h2>4. Connect from a source machine</h2>

@@ -29,8 +29,16 @@ const personas = [
         a: 'Create an explicit ACL allow rule (Enterprise). Same-entity access works by default without extra configuration.',
       },
       {
-        q: 'Can I use my own domain?',
-        a: 'Enterprise supports subdomain entities (finance.example.com) and multi-tenant white-label deployments with custom API base URLs.',
+        q: 'What is a Device-Identity vs a host FQHN?',
+        a: 'Device-Identity is the cryptographic ID of a physical machine (Ed25519 → Device-ID). A host name (e.g. gpu-a.us-east) is a logical label registered to one or more devices. The FQHN (e.g. gpu-a.us-east.user-40acme-2Ecom.idr or DEF *.idr.to form) is how clients address that host globally.',
+      },
+      {
+        q: 'Where do TLS private keys live?',
+        a: 'On the target device only. Let\'s Encrypt certificates obtained via ACME HTTP-01 through https-relay are written as PEM files locally. idr.to servers and relay nodes never receive or store customer private keys.',
+      },
+      {
+        q: 'Does idr.to terminate my HTTPS?',
+        a: 'Not in default pass-through mode on port 443. The relay reads TLS SNI to route to the correct agent, then pipes encrypted bytes to your nginx or app. Your certificate is presented by the target service. P2P tunnels also carry TLS ciphertext when clients use HTTPS over the tunnel.',
       },
     ],
   },
@@ -144,15 +152,19 @@ const personas = [
     items: [
       {
         q: 'How is device identity established?',
-        a: 'Ed25519 keypairs generated on-device. Device-ID is derived from the public key. Host registration requires proof of entity authority.',
+        a: 'Ed25519 keypairs generated on-device at registration. Device-Identity (Device-ID) is derived from the public key. Each registered host receives a globally addressable FQHN. Host registration requires proof of entity authority.',
+      },
+      {
+        q: 'Automatic SSL certificates?',
+        a: 'Yes, on the target. With https-relay and port 80 for HTTP-01, the acme_agent example obtains and renews Let\'s Encrypt certificates. Private keys stay on the edge machine; renewal is automatic via cron/systemd.',
       },
       {
         q: 'Does idr.to store my LLM prompts or SSH sessions?',
-        a: 'Not on the P2P path. Relay paths carry encrypted bytes; pass-through TLS mode does not terminate customer TLS on 443.',
+        a: 'Not on the P2P path. Relay paths carry encrypted TLS bytes only — pass-through mode does not decrypt customer traffic on 443. Private keys never reach idr.to infrastructure.',
       },
       {
         q: 'TLS on HTTPS relay?',
-        a: 'Default pass-through: relay reads SNI only and pipes ciphertext to the agent. Optional HTTP-aware mode terminates TLS at the edge for path routing.',
+        a: 'Default pass-through: relay reads SNI only and pipes ciphertext to the agent. Your nginx or app on the target terminates TLS with a locally stored certificate. Optional HTTP-aware mode terminates TLS at the edge for path routing only.',
       },
       {
         q: 'Audit logs?',

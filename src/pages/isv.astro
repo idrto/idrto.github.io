@@ -47,12 +47,32 @@ await client.connect('idrto:laptop~user-40example.com/ssh');`;
       <p>
         The primary ISV pattern for on-device AI: your users run workloads on <strong>their own hardware</strong>
         (Mac Mini, Linux GPU box, office PC) — you never host the model. They install Ollama (or similar) and an
-        idr.to target agent; your web app connects with a hardcoded service:
+        idr.to target agent; your web app connects with a hardcoded service. Each machine gets a
+        <strong>Device-Identity</strong>; each registered host gets a globally addressable <strong>FQHN</strong>.
       </p>
       <pre><code>{byomExample}</code></pre>
+
+      <h3>Detailed case study: Ollama on M4 Mac Mini</h3>
       <p>
-        Inference stays on the user's machine. Your bundle adds connectivity, not GPU cost. See the
-        <a href="/case-study/ollama">Ollama case study</a>.
+        The full BYOM walkthrough covers Device-Identity registration, FQHN formats, CLI and Browser SDK access,
+        streaming <code>/api/chat</code>, RAG with embeddings, access keys for contractors, and fallback paths
+        (TURN / HTTPS relay). Inference and model weights never leave the customer's edge box.
+      </p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Step</th><th>Action</th></tr></thead>
+          <tbody>
+            <tr><td>1</td><td>Customer registers device → <strong>Device-Identity</strong></td></tr>
+            <tr><td>2</td><td><code>idr host register gpu-a.us-east</code> → <strong>FQHN</strong></td></tr>
+            <tr><td>3</td><td>Ollama on <code>127.0.0.1:11434</code>; agent forwards tunnel OPEN</td></tr>
+            <tr><td>4</td><td>ISV app: <code>IdrClient.forService('ollama')</code> + user enters host</td></tr>
+            <tr><td>5</td><td>P2P WebRTC carries HTTP to Ollama — idr.to never sees prompts</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        <a class="btn btn--primary" href="/case-study/ollama">Full Ollama BYOM case study →</a>
+        <a class="btn btn--ghost" href="/case-study/nginx">Web app case study (nginx + Node.js)</a>
       </p>
 
       <h2>Bundle size</h2>

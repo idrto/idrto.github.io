@@ -19,29 +19,111 @@ const res = await client.fetch('/api/chat', {
   }),
 });`;
 
+const streamExample = `const reader = res.body.getReader();
+const decoder = new TextDecoder();
+while (true) {
+  const { done, value } = await reader.read();
+  if (done) break;
+  for (const line of decoder.decode(value).split('\\n')) {
+    if (line.startsWith('data: ')) {
+      const chunk = JSON.parse(line.slice(6));
+      process.stdout.write(chunk.message?.content ?? '');
+    }
+  }
+}`;
+
 const accessKeyCurl = `curl -X POST https://idr.to/v1/access-keys \\
   -H "Authorization: Bearer …" \\
   -d '{"label":"contractor-q3","scopes":["resolve","connect"]}'`;
+
+const systemdUnit = `[Unit]
+Description=idr.to target agent (Ollama host)
+After=network-online.target ollama.service
+
+[Service]
+ExecStart=/usr/local/bin/idr agent run
+Restart=always
+Environment=IDR_CONFIG=/etc/idrto/idr-agent.toml
+
+[Install]
+WantedBy=multi-user.target`;
+
+const verifyOllamaLocal = `curl http://127.0.0.1:11434/api/tags
+curl http://127.0.0.1:11434/api/generate -d '{
+  "model": "llama3.2",
+  "prompt": "Hello from Austin edge",
+  "stream": false
+}'`;
+
+const cliAccess = `# Source machine
+idr auth login dev@acme.com
+idr agent source   # optional background proxy
+
+# Tunnel Ollama port (P2P, no data charges)
+idr connect gpu-a.us-east.user-40acme-2Ecom.idr 11434 --local-port 11434 --duration 0
+
+# Another terminal — same API as local Ollama
+curl http://127.0.0.1:11434/api/tags
+curl http://127.0.0.1:11434/api/chat -d '{
+  "model": "llama3.2",
+  "messages": [{"role":"user","content":"Edge RTT test"}],
+  "stream": false
+}'`;
+
+const ragPipeline = `# On Mac Mini — embedding endpoint (same Ollama)
+curl http://127.0.0.1:11434/api/embeddings -d '{
+  "model": "nomic-embed-text",
+  "prompt": "Quarterly revenue by region"
+}'
+
+# Remote developer via tunnel — identical URLs on localhost:11434
+idr connect gpu-a.us-east.user-40acme-2Ecom.idr 11434 --local-port 11434`;
 ---
 
-<Layout title="Case study: Ollama on M4 Mac Mini — idr.to">
+<Layout title="Case study: Ollama BYOM on M4 Mac Mini — idr.to">
   <Header slot="header" />
   <Footer slot="footer" />
 
   <section class="section">
     <div class="container">
-      <p class="eyebrow">Case study</p>
+      <p class="eyebrow">Case study · BYOM · AI workloads</p>
       <h1>Run Ollama on an M4 Mac Mini.<br />Use it from <em>anywhere.</em></h1>
       <p class="lead">
-        A practical walkthrough: local LLM inference on Apple Silicon at home or in a branch office,
-        reachable by your team and embedded in a browser app — without opening port 11434 to the internet.
+        A detailed BYOM walkthrough: local LLM inference on Apple Silicon at home or in a branch office, reachable by
+        CLI, scripts, and browser apps — without opening port 11434 or shipping prompts through idr.to servers.
       </p>
 
       <h2>Scenario</h2>
       <p>
-        <strong>Acme AI</strong> runs <a href="https://ollama.com">Ollama</a> on a Mac Mini M4 in their Austin office.
-        Models (Llama, Mistral, etc.) stay on-prem for latency and data residency. Engineers want CLI access from laptops;
-        product wants a web UI that calls <code>/api/chat</code> without VPN.
+        <strong>Acme AI</strong> (an ISV) sells a document assistant. Customers run <a href="https://ollama.com">Ollama</a>
+        on their own M4 Mac Mini in Austin — models stay on-prem for latency, GPU utilization, and data residency.
+        Acme needs:
+      </p>
+      <ul>
+        <li>Engineers calling <code>/api/chat</code> from laptops without VPN</li>
+        <li>A web UI (Browser SDK) where users enter only their edge host name</li>
+        <li>Scoped delegate access for contractors via access keys</li>
+        <li>Optional public HTTPS URL for integrations that cannot use WebRTC</li>
+      </ul>
+
+      <h2>Device-Identity &amp; globally addressable FQHN</h2>
+      <p>When the Mac Mini registers:</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Artifact</th><th>Example</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Device-Identity</strong></td><td>Unique Device-ID from on-device Ed25519 keypair</td></tr>
+            <tr><td><strong>Registered host</strong></td><td><code>gpu-a.us-east</code> under entity <code>acme.com</code></td></tr>
+            <tr><td><strong>Synthetic FQHN</strong></td><td><code>gpu-a.us-east.user-40acme-2Ecom.idr</code></td></tr>
+            <tr><td><strong>Canonical URI</strong></td><td><code>idrto:gpu-a.us-east~acme.com/ollama</code></td></tr>
+            <tr><td><strong>DEF FQHN (relay)</strong></td><td><code>dgpu-a-2eus-2deast-7eacme-2ecom.idr.to</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        Every device gets its own <strong>Device-Identity</strong>; every registered host gets an
+        <strong>FQHN</strong> resolvable worldwide through idr.to. Multiple Mac Minis can share a host name —
+        resolve round-robins like DNS A records.
       </p>
 
       <h2>Architecture</h2>
@@ -51,77 +133,121 @@ const accessKeyCurl = `curl -X POST https://idr.to/v1/access-keys \\
 └─────────┬───────────┘                                └────────▲─────────┘
           │                                                     │
           │ WebRTC P2P (idr-tunnel)                             │ persistent WSS
-          │ HTTP bytes to :11434                                │
+          │ HTTP bytes → target :11434                          │
           ▼                                                     │
-┌─────────────────────┐                                         │
-│  Mac Mini M4 (target)│─────────────────────────────────────────┘
-│  Ollama :11434       │
-│  idr agent (target)  │
-└─────────────────────┘</pre>
+┌─────────────────────┐         ┌─────────────────┐              │
+│  M4 Mac Mini        │         │  Browser (SDK)  │──────────────┘
+│  Ollama :11434      │◄─ P2P ─│  BYOM web app   │
+│  idr agent (target) │         └─────────────────┘
+│  models on disk     │
+└─────────────────────┘
 
-      <h2>Step 1 — Subscribe &amp; register</h2>
+Optional HTTPS relay (metered): curl → *.idr.to DEF FQHN → TLS pass-through → agent → Ollama</pre>
+
+      <div class="callout">
+        <strong>Data plane privacy:</strong> Prompts, completions, and embeddings travel P2P over WebRTC or as
+        encrypted bytes through relay pass-through. idr.to signaling servers never see model I/O. If you later add
+        HTTPS on Ollama behind nginx, Let's Encrypt private keys stay on the Mac Mini — same pass-through semantics.
+      </div>
+
+      <h2>Step 1 — Subscribe, Device-Identity &amp; host registration</h2>
       <ol>
-        <li>Create an Enterprise entity <code>acme.com</code> (multi-level hosts for <code>gpu-a.us-east~acme.com</code>).</li>
-        <li>Install the CLI: <code>curl -fsSL https://download.idr.to/install.sh | bash</code></li>
+        <li>Create Enterprise entity <code>acme.com</code> (multi-level hosts for <code>gpu-a.us-east</code>).</li>
+        <li>Install CLI: <code>curl -fsSL https://download.idr.to/install.sh | bash</code></li>
         <li>On the Mac Mini: <code>idr auth login admin@acme.com</code></li>
-        <li>Start target agent: <code>idr agent run</code> (or systemd/launchd service)</li>
-        <li>Register host: <code>idr host register gpu-a.us-east</code></li>
-        <li>Install Ollama and pull models: <code>ollama pull llama3.2</code></li>
+        <li>Register device (creates <strong>Device-Identity</strong>): <code>idr device register --name mac-mini-m4</code></li>
+        <li>Register host (creates <strong>FQHN</strong> mapping): <code>idr host register gpu-a.us-east</code></li>
+        <li>Start target agent: <code>idr agent run</code> (or launchd — see below)</li>
+        <li>Install Ollama: <code>brew install ollama && ollama serve</code></li>
+        <li>Pull models: <code>ollama pull llama3.2 && ollama pull nomic-embed-text</code></li>
       </ol>
+      <pre><code>{systemdUnit}</code></pre>
+      <p>On macOS use a LaunchDaemon with the same <code>idr agent run</code> command.</p>
 
-      <h2>Step 2 — CLI access from a laptop</h2>
-      <p>Developer machine runs a source agent and uses synthetic hostname + port inference:</p>
-      <pre><code># ~/.ssh/config — optional for other services
-Host *.idr
-  ProxyCommand idr ssh-proxy %h %p
+      <h2>Step 2 — Verify Ollama locally</h2>
+      <pre><code>{verifyOllamaLocal}</code></pre>
+      <p>Ollama listens on loopback; no firewall hole required.</p>
 
-# Resolve and tunnel Ollama port
-idr connect gpu-a.us-east.user-40acme-2Ecom.idr 11434 --local-port 11434
-
-# In another terminal
-curl http://127.0.0.1:11434/api/tags</code></pre>
-      <p>Canonical URI under the hood:</p>
+      <h2>Step 3 — CLI access from a developer laptop</h2>
+      <pre><code>{cliAccess}</code></pre>
+      <p>Canonical URI resolved under the hood:</p>
       <pre><code>idrto:gpu-a.us-east~acme.com/ollama</code></pre>
 
-      <h2>Step 3 — Browser app (ISV)</h2>
-      <p>Acme's product team embeds the Browser SDK — service hardcoded, user only enters host:</p>
+      <h2>Step 4 — BYOM browser app (ISV integration)</h2>
+      <p>
+        Acme hardcodes the Ollama service at build time; end-users only enter their edge FQHN and sign in:
+      </p>
       <pre><code>{browserSdkExample}</code></pre>
       <p>
-        Bytes flow WebRTC P2P to <code>127.0.0.1:11434</code> on the Mac Mini. The idr.to server never sees prompt or completion content.
+        The SDK opens a WebRTC tunnel and sends HTTP/1.1 to <code>127.0.0.1:11434</code> on the Mac Mini.
+        Streaming responses work unchanged:
+      </p>
+      <pre><code>{streamExample}</code></pre>
+
+      <h3>BYOM checklist for ISVs</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Layer</th><th>Who owns it</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr><td>GPU / Mac hardware</td><td>Customer</td><td>M4 Neural Engine + unified memory</td></tr>
+            <tr><td>Ollama + model weights</td><td>Customer</td><td>Never uploaded to Acme or idr.to</td></tr>
+            <tr><td>idr target agent</td><td>Customer</td><td>Outbound WSS only</td></tr>
+            <tr><td>Browser SDK (~11 KB gzip)</td><td>Acme (ISV)</td><td><code>IdrClient.forService('ollama')</code></td></tr>
+            <tr><td>Auth UI</td><td>idr.to SDK shadow DOM</td><td>Access keys never in ISV JS</td></tr>
+            <tr><td>Inference traffic</td><td>P2P WebRTC</td><td>Free; no relay metering</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p><a href="/isv">Full ISV / BYOM guide →</a></p>
+
+      <h2>Step 5 — RAG pipeline on the same edge box</h2>
+      <p>Many BYOM deployments co-locate embedding + vector search with chat:</p>
+      <pre><code>{ragPipeline}</code></pre>
+      <p>
+        A local Chroma or sqlite-vec instance on <code>127.0.0.1:8000</code> can be exposed with
+        <code>idrto:gpu-a.us-east~acme.com/8000</code> — same Device-Identity and FQHN, different port segment.
       </p>
 
-      <h2>Step 4 — Delegate access with access keys</h2>
-      <p>Owner creates a scoped key for a contractor:</p>
+      <h2>Step 6 — Delegate access with access keys</h2>
       <pre><code>{accessKeyCurl}</code></pre>
-      <p>Contractor pastes <code>idr_ak_…</code> into the SDK auth panel — no ISV code changes.</p>
+      <p>
+        Contractor pastes <code>idr_ak_…</code> into the SDK auth panel — scoped to resolve/connect for
+        <code>gpu-a.us-east</code> only. No VPN, no shared SSH keys.
+      </p>
 
       <h2>When the network blocks P2P</h2>
       <p>
-        If a user on a strict corporate Wi‑Fi cannot complete ICE, Acme purchases a <strong>500 GB data bundle</strong>
-        (US$10) to enable TURN. If a legacy integration requires plain HTTPS to a public hostname, they deploy
-        <code>https-relay</code> with DEF URL:
+        Strict corporate Wi‑Fi may block direct ICE. Options:
       </p>
-      <pre><code>https://dgpu-a-2eus-2east-7eacme-2ecom.idr.to/ollama/api/chat</code></pre>
-      <p>Relay traffic counts against bundles; P2P paths do not.</p>
+      <ol>
+        <li><strong>TURN bundle</strong> (500 GB / US$10) — WebRTC relay through <code>turn.idr.to</code>; still encrypted, metered.</li>
+        <li><strong>HTTPS relay</strong> — for clients that only speak TLS to a public hostname:</li>
+      </ol>
+      <pre><code>https://dgpu-a-2eus-2deast-7eacme-2ecom.idr.to/ollama/api/chat</code></pre>
+      <p>
+        Relay reads SNI only; TLS is pass-through if you terminate on nginx/Ollama with a Let's Encrypt cert issued
+        on-device. Relay bytes count against bundles; pure P2P does not.
+      </p>
 
       <h2>Results</h2>
       <div class="card-grid card-grid--3">
         <div class="card">
           <h3>Latency</h3>
-          <p>Local inference on M4; only network RTT added when remote — no cloud hop for tokens.</p>
+          <p>Tokens generated on M4 locally; network adds RTT only — no cloud inference hop.</p>
         </div>
         <div class="card">
           <h3>Security</h3>
-          <p>No inbound firewall rules; ACLs at resolve; models never stored on idr.to infrastructure.</p>
+          <p>Device-Identity per machine; ACLs at resolve; prompts never stored on idr.to; no inbound ports.</p>
         </div>
         <div class="card">
           <h3>Cost</h3>
-          <p>Enterprise US$50/user/year + optional relay bundles only when needed.</p>
+          <p>Enterprise US$50/user/year; GPU power is customer OpEx; relay bundles only when needed.</p>
         </div>
       </div>
 
       <p style="margin-top: 2rem;">
         <a class="btn btn--primary" href="/isv">ISV integration guide</a>
+        <a class="btn btn--ghost" href="/case-study/nginx">nginx + Node.js case study</a>
         <a class="btn btn--ghost" href="/evaluate">Start evaluation</a>
       </p>
     </div>
@@ -132,6 +258,6 @@ curl http://127.0.0.1:11434/api/tags</code></pre>
   h1 { font-size: 2.25rem; margin: 0 0 1rem; }
   h2 { font-size: 1.5rem; margin: 2.5rem 0 1rem; }
   h3 { font-size: 1.0625rem; margin: 0 0 0.5rem; }
-  ol { color: var(--text-muted); padding-left: 1.25rem; }
+  ol, ul { color: var(--text-muted); padding-left: 1.25rem; }
   .card p { color: var(--text-muted); margin: 0; font-size: 0.9375rem; }
 </style>

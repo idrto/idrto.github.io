@@ -15,8 +15,9 @@ import Footer from '../components/Footer.astro';
       <p class="lead">
         <strong>idr.to</strong> is a hosted identity and signaling service for <strong>ID-based routing (IDR)</strong>.
         Run workloads on hardware you control — Mac minis, GPU servers, factory PLCs — and reach them from anywhere
-        with stable names, cryptographic device identity, and policy-governed access. Application data travels
-        peer-to-peer whenever the network allows; our servers coordinate discovery, not your bytes.
+        with stable names, cryptographic <strong>Device-Identity</strong>, and a globally addressable
+        <strong>FQHN</strong> per registered host. Application data travels peer-to-peer whenever the network allows;
+        our servers coordinate discovery, not your bytes.
       </p>
       <div class="hero__actions">
         <a class="btn btn--primary" href="/get-started">Get started</a>
@@ -45,6 +46,48 @@ import Footer from '../components/Footer.astro';
   </section>
 
   <section class="section">
+    <div class="container">
+      <p class="eyebrow">Device-Identity &amp; TLS</p>
+      <h2>Every device gets an identity. Every host gets a global name.</h2>
+      <div class="card-grid card-grid--2">
+        <div class="card">
+          <h3>Device-Identity</h3>
+          <p>
+            On registration, each machine generates an Ed25519 keypair locally. The derived
+            <strong>Device-ID</strong> is its cryptographic identity — used for host binding, ACL checks, and
+            signaling auth. Keys never leave the device.
+          </p>
+        </div>
+        <div class="card">
+          <h3>Globally addressable FQHN</h3>
+          <p>
+            Register a host (e.g. <code>gpu-a.us-east</code>) and receive stable names:
+            synthetic <code>*.idr</code>, canonical <code>idrto:</code> URIs, mirror
+            <code>https://idr.to/…</code>, and optional DEF <code>*.idr.to</code> for HTTPS relay ingress.
+          </p>
+          <p><a href="/addressing">Addressing profiles →</a></p>
+        </div>
+        <div class="card">
+          <h3>Let's Encrypt on the edge</h3>
+          <p>
+            Target agents can automatically obtain and renew TLS certificates from Let's Encrypt via ACME HTTP-01
+            through the optional <code>https-relay</code>. Challenge registration uses the device's identity locator.
+          </p>
+        </div>
+        <div class="card">
+          <h3>Private keys stay on target</h3>
+          <p>
+            Certificate private keys are generated and stored <strong>only on your hardware</strong>. They are never
+            uploaded to idr.to servers or relay infrastructure. SSL/TLS is <strong>pass-through</strong> from clients
+            to your nginx, Ollama, or app — the relay reads SNI on port 443 and pipes ciphertext to the agent.
+          </p>
+          <p><a href="/architecture">Pass-through architecture →</a></p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section--alt">
     <div class="container">
       <p class="eyebrow">What is IDR?</p>
       <h2>DNS gives you names. idr.to gives you <em>reachable</em> on-prem devices.</h2>
@@ -114,7 +157,9 @@ import Footer from '../components/Footer.astro';
         </div>
       </div>
       <p style="margin-top: 1.5rem;">
-        <a href="/case-study/ollama">Read the Ollama on M4 Mini case study →</a>
+        <a href="/case-study">All case studies →</a>
+        · <a href="/case-study/ollama">Ollama BYOM</a>
+        · <a href="/case-study/nginx">nginx + Node.js</a>
       </p>
     </div>
   </section>

@@ -110,10 +110,38 @@ import Footer from '../components/Footer.astro';
 
       <h2>Security properties</h2>
       <ul>
-        <li><strong>Device-ID</strong> derived from Ed25519 public key (first 120 bits of SHA-256)</li>
+        <li><strong>Device-Identity</strong> — Ed25519 keypair generated on-device; Device-ID derived from public key (first 120 bits of SHA-256)</li>
+        <li><strong>FQHN</strong> — each registered host receives globally resolvable names (<code>*.idr</code>, <code>idrto:</code>, optional <code>*.idr.to</code> DEF)</li>
         <li>Same-entity access allowed by default; cross-entity requires explicit ACL rows</li>
-        <li>TLS pass-through mode: relay does not terminate end-user TLS on port 443</li>
+        <li><strong>TLS pass-through</strong> — HTTPS relay on port 443 reads SNI only and pipes ciphertext to the target agent; idr.to never terminates customer TLS in default mode</li>
+        <li><strong>Let's Encrypt on target</strong> — ACME HTTP-01 via relay challenges; certificate and private key PEM files written locally on the edge device and renewed automatically — never uploaded to idr.to</li>
         <li>Browser SDK: access keys never touch ISV JavaScript — auth panel runs in SDK shadow DOM</li>
+      </ul>
+
+      <h2>TLS &amp; certificates (detailed)</h2>
+      <pre class="flow-diagram">Browser / curl                    https-relay (optional)              Target device
+     │                                      │                              │
+     │──── TLS ClientHello (SNI=DEF FQHN) ─►│                              │
+     │                                      │── encrypted records ────────►│ nginx / app
+     │                                      │   (pass-through)             │ LE cert + private key
+     │◄────────────── TLS ServerHello ──────│◄─────────────────────────────│ (generated on device)
+     │                                      │                              │
+     │  idr.to never holds private keys     │  Relay sees ciphertext only  │  acme_agent renews via WSS</pre>
+      <p>
+        For P2P paths, TLS runs inside the WebRTC tunnel — still end-to-end between your client and the service on
+        loopback. Whether P2P or relay, application plaintext is not available to idr.to infrastructure.
+      </p>
+
+      <h2>IPv6 and dual-stack</h2>
+      <p>
+        idr.to is not limited to IPv4. ICE gathers both address families when the OS provides them; P2P succeeds
+        over IPv6 when both peers and the path support it. TURN and the optional HTTPS relay require
+        <strong>A and AAAA</strong> DNS and open firewall ports on both stacks for production.
+      </p>
+      <ul>
+        <li><strong>IPv6-only networks</strong> often need TURN (or TURN over TCP/TLS) to reach IPv4-only peers or relays.</li>
+        <li><strong>Tunnel OPEN</strong> targets a service on the remote device — default <code>127.0.0.1</code> is loopback on that machine, not your browser. Services on <code>::1</code> only need <code>openStream('::1', port)</code>.</li>
+        <li><strong>HTTPS relay</strong> uses DEF hostnames in SNI, not IP literals; publish wildcard A/AAAA for <code>*.idr.to</code>.</li>
       </ul>
 
       <h2>Also documented in code</h2>

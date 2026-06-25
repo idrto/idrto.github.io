@@ -1,0 +1,196 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Header from '../../components/Header.astro';
+import Footer from '../../components/Footer.astro';
+
+const nginxConf = `server {
+  listen 443 ssl;
+  server_name app.us-east.user-40acme-2ecom.idr.to;
+
+  ssl_certificate     /etc/idrto/domain-key.crt;
+  ssl_certificate_key /etc/idrto/domain-key.pem;
+
+  location / {
+    proxy_pass http://127.0.0.1:3000;
+    proxy_http_version 1.1;
+    proxy_set_header Host $host;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection "upgrade";
+  }
+}`;
+
+const acmeCmd = `# On the target (hybrid agent + https-relay URL configured)
+cargo run --example acme_agent -- \\
+  --relay wss://relay.example.com/agent \\
+  --entity-id acme.com \\
+  --host app.us-east \\
+  --staging   # omit for production Let's Encrypt`;
+---
+
+<Layout title="Case study: nginx + Node.js behind NAT — idr.to">
+  <Header slot="header" />
+  <Footer slot="footer" />
+
+  <section class="section">
+    <div class="container">
+      <p class="eyebrow">Case study · Web apps</p>
+      <h1>Node.js + nginx on a home lab.<br />Public HTTPS without port forwarding.</h1>
+      <p class="lead">
+        Run a standard Express or Next.js API on <code>127.0.0.1:3000</code>, front it with nginx for TLS on the
+        target machine, and reach it from anywhere using your device FQHN — with automatic Let's Encrypt renewal and
+        keys that never leave the box.
+      </p>
+
+      <h2>Scenario</h2>
+      <p>
+        <strong>Acme SaaS</strong> ships a self-hosted admin dashboard as a Node.js app. A customer runs it on a
+        Linux mini-PC in their office (no static IP, no inbound firewall rules). They need:
+      </p>
+      <ul>
+        <li>A stable global name for bookmarks and OAuth redirect URIs</li>
+        <li>Valid HTTPS certificates (browser-trusted)</li>
+        <li>Zero exposure of the Node process to the raw internet</li>
+      </ul>
+
+      <h2>Device-Identity &amp; FQHN</h2>
+      <p>When the mini-PC registers as a target:</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Concept</th><th>Value for this deployment</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Device-Identity</strong></td><td>Ed25519-derived Device-ID (unique per machine)</td></tr>
+            <tr><td><strong>Host name</strong></td><td><code>app.us-east</code> (registered under entity <code>acme.com</code>)</td></tr>
+            <tr><td><strong>Synthetic FQHN</strong></td><td><code>app.us-east.user-40acme-2Ecom.idr</code></td></tr>
+            <tr><td><strong>DEF FQHN (relay)</strong></td><td><code>dapp-2eus-2deast-7eacme-2ecom.idr.to</code></td></tr>
+            <tr><td><strong>Canonical URI</strong></td><td><code>idrto:app.us-east~acme.com/443</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        The FQHN is globally addressable through idr.to resolution — no customer DNS zone required for P2P.
+        For plain HTTPS clients, wildcard <code>*.idr.to</code> A/AAAA records point at your relay cluster.
+      </p>
+
+      <h2>Architecture</h2>
+      <pre class="flow-diagram">Internet client
+      │
+      ├─ P2P path (WebRTC) ──────────────────────────────┐
+      │                                                   │
+      └─ HTTPS relay path (optional)                    │
+              │                                           │
+              ▼                                           ▼
+     ┌─────────────────┐                    ┌──────────────────────────┐
+     │ https-relay     │  TLS pass-through  │  Linux mini-PC (target)  │
+     │ reads SNI only  │ ─── ciphertext ──► │  idr agent (outbound WSS)│
+     │ pipes bytes     │                    │  nginx :443 ─► Node :3000│
+     └─────────────────┘                    │  LE cert + key on disk   │
+              ▲                             └──────────────────────────┘
+              │ ACME HTTP-01 :80
+     Let's Encrypt</pre>
+
+      <div class="callout">
+        <strong>TLS pass-through:</strong> On port 443 the relay never decrypts application traffic. nginx on the target
+        terminates TLS with a certificate whose <strong>private key was generated and stored locally</strong>.
+        idr.to infrastructure sees only encrypted bytes on the relay path — same as P2P, which also carries TLS
+        ciphertext when you curl HTTPS through the tunnel.
+      </div>
+
+      <h2>Step 1 — Register the edge device</h2>
+      <pre><code>idr auth login admin@acme.com
+idr device register --name office-mini
+idr host register app.us-east
+idr agent run   # persistent target agent</code></pre>
+      <p>
+        The agent receives a <strong>Device-Identity</strong> tied to its Ed25519 keypair. Host
+        <code>app.us-east</code> maps to this device in the registry.
+      </p>
+
+      <h2>Step 2 — Run Node.js on loopback</h2>
+      <pre><code>cd /opt/acme-dashboard
+npm ci && npm run build
+node dist/server.js   # listens on 127.0.0.1:3000</code></pre>
+      <p>
+        Bind to loopback only — nothing listens on the public interface. The idr agent forwards tunneled connections
+        to <code>127.0.0.1:443</code> (nginx) or <code>:3000</code> (direct HTTP dev mode).
+      </p>
+
+      <h2>Step 3 — nginx reverse proxy + TLS on target</h2>
+      <pre><code>{nginxConf}</code></pre>
+      <p>
+        nginx terminates HTTPS. WebSocket upgrades pass through for React hot reload or Socket.io during development.
+      </p>
+
+      <h2>Step 4 — Automatic Let's Encrypt (keys stay on device)</h2>
+      <p>
+        With <a href="https://github.com/idrto/https-relay">https-relay</a> deployed and port 80 reachable for
+        HTTP-01 challenges, the target runs the ACME helper over the same agent WebSocket:
+      </p>
+      <pre><code>{acmeCmd}</code></pre>
+      <ol>
+        <li>Agent registers the challenge token with the relay (authorized to its <code>host~entity</code> identity).</li>
+        <li>Let's Encrypt hits <code>http://&lt;def-fqhn&gt;/.well-known/acme-challenge/…</code> on port 80.</li>
+        <li>Relay serves the token; LE validates domain control.</li>
+        <li>Certificate and <strong>private key PEM files are written on the target</strong> — never uploaded to idr.to.</li>
+        <li>Reload nginx; renew on a cron/systemd timer (default: skip if &gt;30 days validity).</li>
+      </ol>
+
+      <h2>Step 5 — Connect as a user</h2>
+
+      <h3>P2P (developer laptop, no relay charges)</h3>
+      <pre><code>idr connect app.us-east.user-40acme-2Ecom.idr 443 --local-port 8443 --duration 0
+curl -vk --resolve app.us-east.user-40acme-2Ecom.idr:443:127.0.0.1 \\
+  https://app.us-east.user-40acme-2Ecom.idr/api/health</code></pre>
+      <p>Your laptop speaks TLS to nginx on the mini-PC; the tunnel carries ciphertext only.</p>
+
+      <h3>HTTPS relay (bookmarkable public URL)</h3>
+      <pre><code>curl -vk https://dapp-2eus-2deast-7eacme-2ecom.idr.to/api/health</code></pre>
+      <p>
+        Browser or OAuth provider hits the DEF hostname. Relay forwards encrypted TLS to the agent → nginx → Node.
+        Metered against data transfer bundles when relay bytes flow.
+      </p>
+
+      <h2>Step 6 — Production checklist</h2>
+      <div class="card-grid card-grid--2">
+        <div class="card">
+          <h3>Security</h3>
+          <ul>
+            <li>Node binds <code>127.0.0.1</code> only</li>
+            <li>LE private key permissions <code>600</code></li>
+            <li>ACLs at <code>POST /resolve</code> for cross-entity access</li>
+            <li>No idr.to server ever holds TLS keys</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>Operations</h3>
+          <ul>
+            <li>systemd units for <code>idr agent</code>, Node, nginx</li>
+            <li>ACME renewal timer (weekly cron)</li>
+            <li>Monitor agent WSS connectivity</li>
+            <li>Optional TURN bundle if corporate users block P2P</li>
+          </ul>
+        </div>
+      </div>
+
+      <h2>Results</h2>
+      <p>
+        Acme's customer runs an unmodified Node stack behind nginx — the same layout they'd use on a VPS — but without
+        opening inbound ports or sharing TLS keys with a SaaS vendor. idr.to provides identity, FQHN, and optional
+        relay ingress; application bytes and keys remain on the edge device.
+      </p>
+
+      <p style="margin-top: 2rem;">
+        <a class="btn btn--primary" href="/case-study/ollama">Ollama BYOM case study</a>
+        <a class="btn btn--ghost" href="/architecture">TLS pass-through architecture</a>
+      </p>
+    </div>
+  </section>
+</Layout>
+
+<style>
+  h1 { font-size: 2.25rem; margin: 0 0 1rem; }
+  h2 { font-size: 1.5rem; margin: 2.5rem 0 1rem; }
+  h3 { font-size: 1.0625rem; margin: 1.25rem 0 0.5rem; }
+  ul, ol { color: var(--text-muted); padding-left: 1.25rem; }
+  .card ul { font-size: 0.9375rem; margin: 0; }
+</style>

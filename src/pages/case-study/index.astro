@@ -1,0 +1,78 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Header from '../../components/Header.astro';
+import Footer from '../../components/Footer.astro';
+
+const studies = [
+  {
+    href: '/case-study/ollama',
+    tag: 'BYOM · AI',
+    title: 'Ollama on an M4 Mac Mini',
+    summary:
+      'Run local LLM inference on Apple Silicon at the edge. CLI and browser SDK access without opening port 11434 — detailed BYOM walkthrough for ISVs.',
+  },
+  {
+    href: '/case-study/nginx',
+    tag: 'Web apps',
+    title: 'nginx + Node.js behind NAT',
+    summary:
+      'Host a standard Node.js web app on localhost, terminate TLS with nginx on the target, and reach it globally via P2P or HTTPS relay with automatic Let\'s Encrypt.',
+  },
+];
+---
+
+<Layout title="Case studies — idr.to">
+  <Header slot="header" />
+  <Footer slot="footer" />
+
+  <section class="section">
+    <div class="container">
+      <p class="eyebrow">Real deployments</p>
+      <h1>Case studies</h1>
+      <p class="lead">
+        Each registered device receives a cryptographic <strong>Device-Identity</strong> and a globally addressable
+        <strong>FQHN</strong>. Workloads stay on your hardware; idr.to coordinates access and optional relay paths.
+        TLS private keys never leave the target — SSL is pass-through end-to-end.
+      </p>
+
+      <div class="card-grid card-grid--2" style="margin-top: 2rem;">
+        {studies.map((s) => (
+          <a class="card card--link" href={s.href}>
+            <span class="badge">{s.tag}</span>
+            <h3>{s.title}</h3>
+            <p>{s.summary}</p>
+            <span class="card__cta">Read case study →</span>
+          </a>
+        ))}
+      </div>
+
+      <div class="callout" style="margin-top: 2rem;">
+        <strong>Common pattern:</strong> install a target agent on the edge machine, register a host name, run your
+        service on loopback, and connect via P2P (free) or HTTPS relay (metered). See
+        <a href="/get-started">get started</a> and <a href="/addressing">addressing</a> for FQHN formats.
+      </div>
+    </div>
+  </section>
+</Layout>
+
+<style>
+  h1 { font-size: 2.25rem; margin: 0 0 1rem; }
+  .card--link {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+    transition: border-color 0.15s;
+  }
+  .card--link:hover {
+    text-decoration: none;
+    border-color: var(--accent);
+  }
+  .card h3 { margin: 0.75rem 0 0.5rem; font-size: 1.125rem; }
+  .card p { color: var(--text-muted); margin: 0; font-size: 0.9375rem; }
+  .card__cta {
+    display: inline-block;
+    margin-top: 1rem;
+    font-size: 0.875rem;
+    color: var(--accent);
+  }
+</style>
