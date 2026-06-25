@@ -1,0 +1,131 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+
+const envelopeExample = `{
+  "v": 1,
+  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "type": "auth.challenge",
+  "ts": "2026-06-15T12:00:00.000Z",
+  "payload": {}
+}`;
+---
+
+<Layout title="Signaling protocol — idr.to" description="WebSocket signaling between idr.to agents and the hosted service: authentication, host registration, and WebRTC SDP/ICE relay.">
+  <Header slot="header" />
+  <Footer slot="footer" />
+
+  <section class="section">
+    <div class="container">
+      <p class="eyebrow">Protocol reference</p>
+      <h1>WebSocket signaling</h1>
+      <p class="lead">
+        Agents connect to the hosted control plane over a JSON WebSocket. The channel handles device authentication,
+        host registration, and WebRTC offer/answer/ICE relay — not application payload bytes.
+      </p>
+
+      <h2>Overview</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Property</th><th>Value</th></tr></thead>
+          <tbody>
+            <tr><td>Endpoint</td><td><code>wss://idr.to/v1/signal</code> (tenant hosts use their signal URL)</td></tr>
+            <tr><td>Protocol version</td><td><code>1</code> (message field <code>v</code>)</td></tr>
+            <tr><td>Format</td><td>JSON text frames, UTF-8, max 64 KiB</td></tr>
+            <tr><td>Roles</td><td>Control plane (auth, <code>register.host</code>) + signaling relay (SDP/ICE)</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2>Message envelope</h2>
+      <p>Every message is a JSON object:</p>
+      <pre><code>{envelopeExample}</code></pre>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Field</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><code>v</code></td><td>Protocol version (must be <code>1</code>)</td></tr>
+            <tr><td><code>id</code></td><td>UUID; responders echo request <code>id</code></td></tr>
+            <tr><td><code>type</code></td><td>Dot-separated message type</td></tr>
+            <tr><td><code>ts</code></td><td>ISO 8601 UTC timestamp</td></tr>
+            <tr><td><code>payload</code></td><td>Type-specific body (may be empty)</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2>Connection lifecycle</h2>
+      <ol>
+        <li>WebSocket opens → server sends <code>auth.challenge</code> with hex nonce (64 chars).</li>
+        <li>Agent responds with <code>auth.challenge_response</code>: Device-ID, Ed25519 public key, signature over raw nonce, agent metadata.</li>
+        <li>Server replies <code>auth.ok</code> or <code>auth.failed</code> (closes with code <code>4002</code> on failure).</li>
+        <li>Target/hybrid agents may send <code>register.host</code> with entity-id, host, and device certificate chain.</li>
+        <li>After <code>POST /resolve</code>, source and target exchange <code>signal.offer</code>, <code>signal.answer</code>, and <code>signal.ice</code> via the server.</li>
+        <li>Server sends <code>ping</code> every 30s; agent must <code>pong</code> within 10s.</li>
+      </ol>
+      <p>Agents must authenticate within <strong>30 seconds</strong> of connecting. Target/hybrid agents keep persistent connections; source agents may use ephemeral sessions.</p>
+
+      <h2>Close codes</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Code</th><th>Meaning</th></tr></thead>
+          <tbody>
+            <tr><td>1000</td><td>Normal closure</td></tr>
+            <tr><td>4001</td><td>Authentication timeout</td></tr>
+            <tr><td>4002</td><td>Authentication failed</td></tr>
+            <tr><td>4003</td><td>Protocol violation</td></tr>
+            <tr><td>4004</td><td>Idle timeout (missed pong)</td></tr>
+            <tr><td>4005</td><td>Server shutting down</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2>Message types (summary)</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Type</th><th>Direction</th><th>Purpose</th></tr></thead>
+          <tbody>
+            <tr><td><code>auth.challenge</code></td><td>Server → Agent</td><td>Begin device authentication</td></tr>
+            <tr><td><code>auth.challenge_response</code></td><td>Agent → Server</td><td>Ed25519 signature over nonce</td></tr>
+            <tr><td><code>auth.ok</code> / <code>auth.failed</code></td><td>Server → Agent</td><td>Auth result</td></tr>
+            <tr><td><code>register.host</code></td><td>Agent → Server</td><td>Bind Host-Identity to Device-ID</td></tr>
+            <tr><td><code>register.ok</code> / <code>register.failed</code></td><td>Server → Agent</td><td>Registration result</td></tr>
+            <tr><td><code>signal.offer</code></td><td>Source → Target (via server)</td><td>SDP offer relay</td></tr>
+            <tr><td><code>signal.answer</code></td><td>Target → Source (via server)</td><td>SDP answer relay</td></tr>
+            <tr><td><code>signal.ice</code></td><td>Either → Other</td><td>Trickle ICE candidates</td></tr>
+            <tr><td><code>signal.error</code></td><td>Server → Agent</td><td>Signaling session error</td></tr>
+            <tr><td><code>tunnel.open</code> / <code>tunnel.data</code> / <code>tunnel.close</code></td><td>Server ↔ Agent</td><td>Edge relay byte streams (optional)</td></tr>
+            <tr><td><code>ping</code> / <code>pong</code></td><td>Server ↔ Agent</td><td>Heartbeat</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2>Signal sessions</h2>
+      <ul>
+        <li>Created by the server when <code>POST /resolve</code> succeeds (<code>signal_session</code> in response).</li>
+        <li>TTL: 120 seconds from last signal message.</li>
+        <li>Max 10 concurrent sessions per device; max SDP 16 KiB; max 50 ICE candidates per session.</li>
+        <li>If the target disconnects mid-signaling, source receives <code>signal.error</code> with <code>target_unavailable</code>.</li>
+      </ul>
+
+      <h2>Implementation notes</h2>
+      <ul>
+        <li>v1 uses JSON text frames only — binary frames are rejected.</li>
+        <li>Unsupported protocol version (<code>v: 2</code>) → <code>version_unsupported</code> and close <code>4003</code>.</li>
+        <li>Target agents reconnect with exponential backoff (1s … 60s); host mappings persist across reconnects.</li>
+        <li>Data plane after ICE: <a href="https://github.com/idrto/client/blob/main/docs/TUNNEL.md">idr-tunnel-v1</a> (public client repo).</li>
+      </ul>
+
+      <p style="margin-top: 2rem;">
+        <a class="btn btn--ghost" href="/architecture">Architecture overview</a>
+        <a class="btn btn--ghost" href="/addressing">Addressing &amp; URIs</a>
+      </p>
+    </div>
+  </section>
+</Layout>
+
+<style>
+  h1 { font-size: 2.25rem; margin: 0 0 1rem; }
+  h2 { font-size: 1.5rem; margin: 2.5rem 0 1rem; }
+  ol, ul { color: var(--text-muted); padding-left: 1.25rem; }
+</style>

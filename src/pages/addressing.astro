@@ -159,7 +159,18 @@ psql postgresql://u@db1.finance.user-40example-2Ecom.idr:5432/mydb</code></pre>
         </table>
       </div>
 
-      <p><a href="https://github.com/idrto/api/blob/main/openspec/URI.md">Full URI spec on GitHub →</a></p>
+      <h2 id="tunnel-wire">Tunnel wire (idr-tunnel-v1)</h2>
+      <p>
+        After ICE, peers multiplex streams over WebRTC. OPEN control frames on stream 0 use:
+      </p>
+      <pre><code>[0x01][stream_id u32 BE][host_len u16 BE][host utf8][port u16 BE][transport u8]</code></pre>
+      <p><code>transport</code>: <code>0</code> = TCP, <code>1</code> = UDP. Full wire format:
+        <a href="https://github.com/idrto/client/blob/main/docs/TUNNEL.md">client TUNNEL.md</a>.</p>
+
+      <p>
+        Related: <a href="/signaling">Signaling protocol</a> ·
+        <a href="/architecture">Architecture</a>
+      </p>
     </div>
   </section>
 </Layout>

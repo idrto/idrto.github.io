@@ -64,11 +64,11 @@ const personas = [
       },
       {
         q: 'How do I debug connection failures?',
-        a: 'Check resolve response (device online?), signaling WSS connectivity, ICE candidates in agent logs, and whether TURN is required. See client TUNNEL.md and api NAT_TESTING.md.',
+        a: 'Check resolve response (device online?), signaling WSS connectivity, ICE candidates in agent logs, and whether TURN is required. See the NAT testing guide and client TUNNEL.md.',
       },
       {
         q: 'Can I self-host the API or relay?',
-        a: 'Yes. The API stack and https-relay are open source. Multi-tenant production guidance is in api/docs/PRODUCTION.md. Managed idr.to is the default hosted offering.',
+        a: 'The hosted idr.to service is the default offering. You can self-host the open-source https-relay for edge ingress; contact idr.to for multi-tenant API deployment options.',
       },
     ],
   },
@@ -183,7 +183,7 @@ const personas = [
     <div class="container">
       <p class="eyebrow">Help</p>
       <h1>Frequently asked questions</h1>
-      <p class="lead">Detailed answers by persona. For protocol specifics, see GitHub openspec and client docs linked from the footer.</p>
+      <p class="lead">Detailed answers by persona. Protocol reference lives on this site — see the footer links and <a href="/signaling">signaling</a>, <a href="/billing">billing</a>, and <a href="/addressing">addressing</a> pages.</p>
 
       <nav class="faq-nav" aria-label="FAQ sections">
         {personas.map((p) => (
@@ -204,9 +204,10 @@ const personas = [
       ))}
 
       <div class="callout" style="margin-top: 2rem;">
-        <strong>Additional topics in repo docs:</strong> device bootstrap bundles, ACME on https-relay,
-        mesh relay QUIC (operator), billing attestation JWT for TURN, UDP over WebRTC semantics,
-        round-robin multi-device hosts, and portal read-only UI (Enterprise).
+        <strong>Additional topics on this site:</strong> <a href="/signaling">signaling protocol</a>,
+        <a href="/billing">billing API</a>, <a href="/nat-testing">NAT/TURN testing</a>.
+        Open-source: <a href="https://github.com/idrto/https-relay">https-relay</a> (ACME, mesh relay),
+        <a href="https://github.com/idrto/client">client</a> (agent modes, tunnel wire).
       </div>
     </div>
   </section>

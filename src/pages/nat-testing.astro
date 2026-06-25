@@ -1,0 +1,104 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+---
+
+<Layout title="NAT &amp; TURN testing — idr.to" description="Validate STUN, TURN, and P2P connectivity through idr.to — test matrix, firewall ports, and IPv6 dual-stack notes.">
+  <Header slot="header" />
+  <Footer slot="footer" />
+
+  <section class="section">
+    <div class="container">
+      <p class="eyebrow">Operations</p>
+      <h1>NAT traversal &amp; TURN validation</h1>
+      <p class="lead">
+        Use this guide to confirm ICE paths on restrictive networks. Production TURN requires an active
+        <a href="/billing">TURN entitlement</a>; evaluation accounts typically use shared-secret credentials.
+      </p>
+
+      <h2>Quick check</h2>
+      <ol>
+        <li><strong>Source:</strong> <code>POST /resolve</code> — confirm <code>stun_urls</code>, <code>turn_urls</code>, and TURN credentials (or attestation URL in production JWT mode).</li>
+        <li><strong>Target:</strong> <code>GET /v1/ice?host=laptop</code> with a CLI bearer token.</li>
+        <li>Connect from a restrictive network (symmetric NAT, mobile hotspot, or corporate Wi‑Fi).</li>
+        <li>Inspect agent logs for ICE candidate types (host, srflx, relay).</li>
+      </ol>
+
+      <h2>Test matrix</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Scenario</th><th>Expected</th></tr></thead>
+          <tbody>
+            <tr><td>Same LAN, UDP open</td><td>P2P via STUN</td></tr>
+            <tr><td>Symmetric NAT (source or target)</td><td>TURN relay in ICE; media via coturn</td></tr>
+            <tr><td>Corporate firewall (UDP blocked)</td><td>TURN over TCP (<code>turn:host:3478?transport=tcp</code>)</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2>Agent roles</h2>
+      <ul>
+        <li><strong>Source agents</strong> apply ICE servers from <code>POST /resolve</code>.</li>
+        <li><strong>Target agents</strong> fetch ICE via <code>GET /v1/ice?host={'{host}'}</code> and obtain TURN attestations via <code>POST /v1/billing/attestation</code> when required.</li>
+        <li>Wire format after connect: <a href="https://github.com/idrto/client/blob/main/docs/TUNNEL.md">idr-tunnel-v1</a> (client repo).</li>
+      </ul>
+
+      <h2>TURN firewall (coturn host)</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Port</th><th>Protocol</th><th>Purpose</th></tr></thead>
+          <tbody>
+            <tr><td>3478</td><td>UDP, TCP</td><td>STUN + TURN</td></tr>
+            <tr><td>5349</td><td>UDP, TCP</td><td>TURNS (TLS)</td></tr>
+            <tr><td>49152–49252</td><td>UDP</td><td>Relay allocation range (default)</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>When coturn sits behind NAT, configure <code>TURN_EXTERNAL_IP=public/private</code>.</p>
+
+      <h2>Coturn auth modes</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Mode</th><th>When to use</th></tr></thead>
+          <tbody>
+            <tr><td><code>shared_secret</code></td><td>Dev / evaluation; API-issued HMAC credentials</td></tr>
+            <tr><td><code>oauth_jwt</code></td><td>Production; JWT attestations introspected at <code>/v1/billing/introspect</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2>IPv6 and dual-stack</h2>
+      <p>idr.to is not IPv4-only. ICE gathers both address families when the OS exposes them.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Area</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr><td>ICE / WebRTC</td><td>STUN/TURN hostnames resolve A + AAAA; bracketed IPv6 literals supported in URLs</td></tr>
+            <tr><td>TURN / coturn</td><td>Publish A and AAAA for <code>turn.idr.to</code>; open 3478/5349 on both stacks</td></tr>
+            <tr><td>IPv6-only clients</td><td>Often need TURN (or TURN-TCP/TLS) to reach IPv4-only peers</td></tr>
+            <tr><td>HTTPS relay DEF</td><td>Wildcard A/AAAA for <code>*.idr.to</code>; SNI uses hostnames, not IP literals</td></tr>
+            <tr><td>Tunnel OPEN</td><td>Default loopback is <code>127.0.0.1</code> on the target; use <code>::1</code> for IPv6-only services</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        Client tunnel details:
+        <a href="https://github.com/idrto/client/blob/main/docs/TUNNEL.md">TUNNEL.md</a>.
+        Relay mesh IPv6:
+        <a href="https://github.com/idrto/https-relay#ipv6-and-dual-stack">https-relay README</a>.
+      </p>
+
+      <p style="margin-top: 2rem;">
+        <a class="btn btn--ghost" href="/billing">Billing &amp; attestations</a>
+        <a class="btn btn--ghost" href="/architecture">Architecture</a>
+      </p>
+    </div>
+  </section>
+</Layout>
+
+<style>
+  h1 { font-size: 2.25rem; margin: 0 0 1rem; }
+  h2 { font-size: 1.5rem; margin: 2.5rem 0 1rem; }
+  ol, ul { color: var(--text-muted); padding-left: 1.25rem; }
+</style>

@@ -1,0 +1,129 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+
+const attestationExample = `POST /v1/billing/attestation
+Authorization: Bearer <cli-token>
+Content-Type: application/json
+
+{"entity_id":"example.com","host":"laptop"}`;
+
+const attestationResponse = `{
+  "token": "<JWT>",
+  "expires_at": 1735689600,
+  "turn_username": "example.com:laptop",
+  "turn_urls": ["turn:turn.idr.to:3478?transport=udp"]
+}`;
+---
+
+<Layout title="Billing &amp; entitlements — idr.to" description="Signaling and TURN subscription products, billing API endpoints, and TURN attestation flow for the hosted idr.to service.">
+  <Header slot="header" />
+  <Footer slot="footer" />
+
+  <section class="section">
+    <div class="container">
+      <p class="eyebrow">API reference</p>
+      <h1>Billing &amp; entitlements</h1>
+      <p class="lead">
+        The hosted idr.to service gates control-plane access (resolve, host registration) and optional TURN relay
+        through subscription entitlements. Consumer pricing is on the <a href="/pricing">pricing page</a>.
+      </p>
+
+      <h2>Products</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Product</th><th>Scope</th><th>Enforced at</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><strong>Signaling</strong></td>
+              <td>Per entity (e.g. <code>example.com</code>)</td>
+              <td><code>POST /resolve</code>, WSS <code>register.host</code>, tunnel/metadata</td>
+            </tr>
+            <tr>
+              <td><strong>TURN relay</strong></td>
+              <td>Per entity + host (or entity-wide seat with empty host)</td>
+              <td>Coturn via signed JWT attestation</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        Without an active signaling subscription, resolve returns <code>402 payment_required</code>.
+        TURN requires signaling plus an active TURN seat for the target host (or entity-wide).
+      </p>
+
+      <h2>Discovery</h2>
+      <p><code>GET /.well-known/idr-configuration</code> returns:</p>
+      <ul>
+        <li><code>billing_url</code> — <code>GET /v1/billing/status</code></li>
+        <li><code>attestation_url</code> — <code>POST /v1/billing/attestation</code></li>
+        <li><code>ice_url</code> — <code>GET /v1/ice?host={'{host}'}</code></li>
+      </ul>
+      <p>JWKS for offline JWT verification: <code>GET /.well-known/jwks.json</code>.</p>
+
+      <h2>Agent API</h2>
+
+      <h3>Check status</h3>
+      <pre><code>GET /v1/billing/status
+Authorization: Bearer &lt;cli-token&gt;
+Accept-Version: 1</code></pre>
+      <p>Returns <code>signaling</code>, <code>turn[]</code>, and <code>signaling_active</code>.</p>
+
+      <h3>TURN attestation (production)</h3>
+      <pre><code>{attestationExample}</code></pre>
+      <pre><code>{attestationResponse}</code></pre>
+      <p>
+        Use <code>turn_username</code> as the ICE username and <code>token</code> as the TURN password.
+        JWT claims include entity (<code>sub</code>), <code>host</code>, entitlements (<code>ent</code>), tenant, and <code>exp</code>.
+        Coturn validates via <code>GET /v1/billing/introspect?token=…</code> when configured for <code>oauth_jwt</code>.
+      </p>
+
+      <h2>ICE issuance modes</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Mode</th><th>API behavior</th><th>Typical use</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><code>shared_secret</code></td>
+              <td><code>POST /resolve</code> and <code>GET /v1/ice</code> return HMAC <code>turn_username</code> / <code>turn_credential</code></td>
+              <td>Local dev, evaluation</td></tr>
+            <tr>
+              <td><code>oauth_jwt</code></td>
+              <td>ICE returns STUN/TURN URLs + attestation URL; agent calls attestation endpoint</td>
+              <td>Production hosted idr.to</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p><code>GET /v1/ice?host=laptop</code> requires the device host label for TURN seat lookup.</p>
+
+      <h2>Client behavior</h2>
+      <ul>
+        <li><strong>Source</strong> — ICE from <code>POST /resolve</code>; fetches attestation when HMAC credentials are absent.</li>
+        <li><strong>Target</strong> — <code>GET /v1/ice?host={'{host}'}</code> then <code>POST /v1/billing/attestation</code> on inbound offers when needed.</li>
+        <li>Target/hybrid agents need a configured CLI token for REST billing/ICE calls.</li>
+      </ul>
+
+      <h2>Data transfer metering</h2>
+      <p>
+        TURN relay bytes and HTTPS mux relay bytes count against purchased <strong>500 GB bundles</strong> (see
+        <a href="/pricing">pricing</a>). Pure P2P WebRTC does not consume data bundles.
+      </p>
+
+      <h2>Active subscription statuses</h2>
+      <p>Entitlements granted: <code>trialing</code>, <code>active</code>, <code>past_due</code>. Denied: <code>canceled</code>, <code>paused</code>, or past <code>current_period_end</code>.</p>
+
+      <p style="margin-top: 2rem;">
+        <a class="btn btn--primary" href="/pricing">Consumer pricing</a>
+        <a class="btn btn--ghost" href="/nat-testing">NAT &amp; TURN testing</a>
+      </p>
+    </div>
+  </section>
+</Layout>
+
+<style>
+  h1 { font-size: 2.25rem; margin: 0 0 1rem; }
+  h2 { font-size: 1.5rem; margin: 2.5rem 0 1rem; }
+  h3 { font-size: 1.125rem; margin: 1.25rem 0 0.75rem; }
+  ul { color: var(--text-muted); padding-left: 1.25rem; }
+</style>
