@@ -32,9 +32,14 @@ while (true) {
   }
 }`;
 
-const accessKeyCurl = `curl -X POST https://idr.to/v1/access-keys \\
+const teammateAcl = `# Enterprise ACL — allow contractor entity to reach gpu-a.us-east
+curl -X POST https://idr.to/entities/acme.com/acls \\
   -H "Authorization: Bearer …" \\
-  -d '{"label":"contractor-q3","scopes":["resolve","connect"]}'`;
+  -d '{
+    "target_host_pattern": "gpu-a.us-east",
+    "source_entity_id": "contractor@partner.com",
+    "source_host_pattern": "browser"
+  }'`;
 
 const systemdUnit = `[Unit]
 Description=idr.to target agent (Ollama host)
@@ -102,7 +107,7 @@ idr connect gpu-a.us-east.user-40acme-2Ecom.idr 11434 --local-port 11434`;
       <ul>
         <li>Engineers calling <code>/api/chat</code> from laptops without VPN</li>
         <li>A web UI (Browser SDK) where users enter only their edge host name</li>
-        <li>Scoped delegate access for contractors via access keys</li>
+        <li>Teammate access via account sign-in and ACL rules on the target entity</li>
         <li>Optional public HTTPS URL for integrations that cannot use WebRTC</li>
       </ul>
 
@@ -209,10 +214,10 @@ Optional HTTPS relay (metered): curl → *.idr.to DEF FQHN → TLS pass-through 
         <code>idrto:gpu-a.us-east~acme.com/8000</code> — same Host-Identity and FQHN, different port segment.
       </p>
 
-      <h2>Step 6 — Delegate access with access keys</h2>
-      <pre><code>{accessKeyCurl}</code></pre>
+      <h2>Step 6 — Teammate access via ACL</h2>
+      <pre><code>{teammateAcl}</code></pre>
       <p>
-        Contractor pastes <code>idr_ak_…</code> into the SDK auth panel — scoped to resolve/connect for
+        The contractor signs in with their own idr.to account in the SDK auth panel. ACL rules grant resolve access to
         <code>gpu-a.us-east</code> only. No VPN, no shared SSH keys.
       </p>
 

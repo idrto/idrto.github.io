@@ -77,8 +77,8 @@ const personas = [
     title: 'ISVs & app builders',
     items: [
       {
-        q: 'Can I collect access keys in my app UI?',
-        a: 'No. Use the Browser SDK auth panel only. Keys must not enter ISV JavaScript state or your backend — the SDK exchanges them directly with idr.to.',
+        q: 'Can I collect passwords or tokens in my app UI?',
+        a: 'No. Use the Browser SDK auth panel only. Credentials must not enter ISV JavaScript state or your backend — the SDK registers Signed Host-Identity directly with idr.to.',
       },
       {
         q: 'What does the end-user configure?',
@@ -103,8 +103,8 @@ const personas = [
     title: 'End users & delegates',
     items: [
       {
-        q: 'I received an access key — what do I do?',
-        a: 'Open the ISV app auth panel, choose Access key, paste idr_ak_…. Enter the target host your admin provided. The SDK handles the rest.',
+        q: 'How do teammates connect from the browser app?',
+        a: 'Each user signs in with their idr.to entity ID and password in the SDK panel. ACL rules on the target control who can resolve which hosts.',
       },
       {
         q: 'Why is the target offline?',

@@ -26,7 +26,7 @@ import Footer from '../components/Footer.astro';
             <li>Entity and device registration</li>
             <li>Host-Identity → Device-ID mappings</li>
             <li>ACL evaluation at <code>POST /resolve</code></li>
-            <li>OIDC login, access keys, billing entitlements</li>
+            <li>OIDC login, Signed Host-Identity, billing entitlements</li>
           </ul>
         </div>
         <div class="card">
@@ -115,7 +115,7 @@ import Footer from '../components/Footer.astro';
         <li>Same-entity access allowed by default; cross-entity requires explicit ACL rows</li>
         <li><strong>TLS pass-through</strong> — HTTPS relay on port 443 reads SNI only and pipes ciphertext to the target agent; idr.to never terminates customer TLS in default mode</li>
         <li><strong>Let's Encrypt on target</strong> — ACME HTTP-01 via relay challenges; certificate and private key PEM files written locally on the edge device and renewed automatically — never uploaded to idr.to</li>
-        <li>Browser SDK: access keys never touch ISV JavaScript — auth panel runs in SDK shadow DOM</li>
+        <li>Browser SDK: credentials never touch ISV JavaScript — auth panel runs in SDK shadow DOM; resolve uses Signed Host-Identity + proof of possession</li>
       </ul>
 
       <h2>TLS &amp; certificates (detailed)</h2>

@@ -1,0 +1,40 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Header from '../../components/Header.astro';
+import Footer from '../../components/Footer.astro';
+---
+
+<Layout title="Billing — idr.to">
+  <Header slot="header" />
+  <Footer slot="footer" />
+
+  <section class="section">
+    <div class="container">
+      <p class="eyebrow">Account</p>
+      <h1>Billing</h1>
+      <p class="lead">
+        Estimated monthly invoice includes annual bundle cost (prorated) plus P2P overage and relay traffic.
+        Purchase additional bundles to increase pooled quotas immediately.
+      </p>
+
+      <div class="card-grid card-grid--2" style="margin-top:1.5rem;">
+        <div class="card">
+          <h2 style="margin-top:0;">Buy another Personal Bundle</h2>
+          <p>US$5/year — +1 entity, +1 target, +4 sources, +500 GB/month P2P</p>
+          <a class="btn btn--primary" href="/checkout?plan=personal">Purchase</a>
+        </div>
+        <div class="card">
+          <h2 style="margin-top:0;">Buy another Enterprise Bundle</h2>
+          <p>US$50/year — +2 entities, +5 targets, +20 sources, +2 TB/month P2P</p>
+          <a class="btn btn--primary" href="/checkout?plan=enterprise">Purchase</a>
+        </div>
+      </div>
+
+      <p style="margin-top:2rem;">
+        <a href="/account/usage">← Back to usage dashboard</a> ·
+        <a href="/pricing">Pricing</a> ·
+        <a href="/billing">API billing reference</a>
+      </p>
+    </div>
+  </section>
+</Layout>

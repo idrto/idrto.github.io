@@ -10,78 +10,131 @@ import Footer from '../components/Footer.astro';
 
   <section class="section">
     <div class="container">
-      <p class="eyebrow">Plans</p>
+      <p class="eyebrow">Bundles</p>
       <h1>Pricing</h1>
       <p class="lead">
-        Signaling unlocks registry, ACLs, and WebRTC introduction. Data transfer bundles are optional and only
-        required when traffic must flow through TURN or HTTPS relay — not for direct P2P.
+        Purchase <strong>bundles</strong> that pool Entity-ID registrations, Target and Source Device registrations,
+        and monthly P2P traffic. <strong>Relay traffic</strong> (TURN + HTTPS mux) is always billed separately.
+        Sources authenticate with <strong>Signed Host-Identity</strong> documents and proof of possession.
       </p>
+
+      <div class="callout" style="margin-top: 1.5rem;">
+        <strong>Bundles stack.</strong> Buying multiple Personal or Enterprise bundles adds all included resources into one pooled quota.
+        Example: 2× Personal = 2 entities, 2 targets, 8 sources, 1 TB/month P2P.
+      </div>
 
       <div class="card-grid card-grid--2" style="margin-top: 2rem;">
         <div class="card pricing-card">
-          <span class="badge">Personal</span>
-          <p class="pricing-card__price">US$5 <span>/ year</span></p>
+          <span class="badge">Personal Bundle</span>
+          <p class="pricing-card__price">US$5 <span>/ bundle / year</span></p>
           <ul>
-            <li><strong>Single-level host</strong> — e.g. <code>laptop~you@example.com</code></li>
-            <li>One user, up to <strong>5 devices</strong> — <a href="/addressing#multiple-devices">one host per machine</a></li>
-            <li>Hosted signaling + STUN</li>
-            <li>Same-entity access by default</li>
-            <li>P2P data plane included (no per-GB charge)</li>
-            <li>Read-only web portal</li>
+            <li>1 Entity-ID registration</li>
+            <li>1 Target Device-ID registration</li>
+            <li>4 Source Device-ID registrations</li>
+            <li>500 GB/month included P2P traffic</li>
+            <li>Single-level hosts only</li>
+            <li>ACL: <code>public</code>, <code>same-entity</code></li>
           </ul>
-          <a class="btn btn--primary" href="/checkout?plan=personal">Purchase Personal</a>
+          <a class="btn btn--primary" href="/checkout?plan=personal">Purchase Personal Bundle</a>
         </div>
         <div class="card pricing-card">
-          <span class="badge">Enterprise</span>
-          <p class="pricing-card__price">US$50 <span>/ user / year</span></p>
-          <p style="margin:0;color:var(--text-muted);font-size:0.875rem;">or <strong>US$5 / user / month</strong></p>
+          <span class="badge">Enterprise Bundle</span>
+          <p class="pricing-card__price">US$50 <span>/ bundle / year</span></p>
           <ul>
-            <li><strong>Multi-level hosts</strong> — e.g. <code>db1.us-east.finance~corp.com</code></li>
-            <li>One user, up to <strong>5 devices</strong> — <a href="/addressing#multiple-devices">one host per machine</a></li>
-            <li>Cross-entity ACL management</li>
-            <li>Subdomain entity delegation</li>
-            <li>Org-wide access keys &amp; audit</li>
-            <li>Priority support</li>
+            <li>2 Entity-ID registrations</li>
+            <li>5 Target Device-ID registrations</li>
+            <li>20 Source Device-ID registrations</li>
+            <li>2 TB/month included P2P traffic</li>
+            <li>Multi-level hosts &amp; cross-entity ACLs</li>
+            <li>Advanced policy engine (deny rules, OU, wildcards)</li>
+            <li>SSO / SCIM (Enterprise IAM)</li>
           </ul>
-          <a class="btn btn--primary" href="/checkout?plan=enterprise">Purchase Enterprise</a>
+          <a class="btn btn--primary" href="/checkout?plan=enterprise">Purchase Enterprise Bundle</a>
         </div>
       </div>
 
-      <h2>Data transfer bundles</h2>
-      <p>For traffic that cannot travel P2P and must use TURN or HTTPS edge relay:</p>
-      <div class="card" style="max-width: 32rem;">
-        <p class="pricing-card__price" style="margin:0;">US$10 <span>/ 500 GB bundle</span></p>
-        <ul>
-          <li>Buy as many 500 GB bundles as you need</li>
-          <li><strong>Unused data rolls over</strong> to the next month for up to <strong>12 months</strong></li>
-          <li>Metered: TURN relay + HTTPS mux (https-relay)</li>
-          <li>Not consumed by direct WebRTC P2P connections</li>
-        </ul>
-        <a class="btn btn--ghost" href="/checkout?plan=data-500">Add 500 GB bundle</a>
+      <h2 id="compare">Personal vs Enterprise</h2>
+      <div class="table-wrap">
+        <table class="compare-table">
+          <thead>
+            <tr>
+              <th scope="col">Feature</th>
+              <th scope="col">Personal</th>
+              <th scope="col">Enterprise</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Annual price</strong></td>
+              <td>USD 5 per bundle</td>
+              <td>USD 50 per bundle</td>
+            </tr>
+            <tr>
+              <td><strong>Entity-ID registrations</strong></td>
+              <td>1 per bundle</td>
+              <td>2 per bundle</td>
+            </tr>
+            <tr>
+              <td><strong>Target Device-ID registrations</strong></td>
+              <td>1 per bundle</td>
+              <td>5 per bundle</td>
+            </tr>
+            <tr>
+              <td><strong>Source Device-ID registrations</strong></td>
+              <td>4 per bundle</td>
+              <td>20 per bundle</td>
+            </tr>
+            <tr>
+              <td><strong>Included P2P traffic</strong></td>
+              <td>500 GB/month</td>
+              <td>2 TB/month</td>
+            </tr>
+            <tr>
+              <td><strong>Relay traffic</strong></td>
+              <td>Pay-as-you-go</td>
+              <td>Pay-as-you-go</td>
+            </tr>
+            <tr>
+              <td><strong>ACL support</strong></td>
+              <td><code>public</code>, <code>same-entity</code></td>
+              <td>Advanced policy engine</td>
+            </tr>
+            <tr>
+              <td><strong>Source authentication</strong></td>
+              <td colspan="2">Signed Host-Identity + proof of possession</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
 
-      <div class="callout" style="margin-top: 2rem;">
-        <strong>No data bundle?</strong> Your target hosts remain fully accessible on <strong>peer-to-peer</strong>
-        connections when the network allows ICE. You only need bundles when you rely on relayed paths.
+      <h2>Traffic rates</h2>
+      <p>P2P is inexpensive and encouraged. Relay is billed separately and priced higher than P2P overage.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Type</th><th>Rate</th></tr></thead>
+          <tbody>
+            <tr><td>P2P overage (beyond bundled allowance)</td><td>~US$0.01 / GB</td></tr>
+            <tr><td>Relay (TURN + HTTPS mux)</td><td>~US$0.10 / GB</td></tr>
+          </tbody>
+        </table>
       </div>
+      <p class="compare-table__note">Rates are configurable on the platform; see <a href="/.well-known/idr-products">product config</a> on the API.</p>
 
-      <h2>30-day evaluation</h2>
+      <h2>Usage dashboard</h2>
       <p>
-        New accounts receive <strong>30 days of signaling-only</strong> access — registry, ACLs, WebRTC signaling, and P2P.
-        No credit card required. Relay data bundles are not included during trial; purchase after evaluation ends.
+        View pooled quotas, monthly P2P and relay usage, purchased bundles, and estimated invoice on the
+        <a href="/account/usage">usage dashboard</a>. Warnings appear at 70%, 90%, and 100% utilization.
       </p>
-      <a class="btn btn--primary" href="/evaluate">Start free evaluation</a>
 
       <h2>What's included everywhere</h2>
       <ul>
-        <li>Ed25519 Device-ID &amp; Host-Identity (<code>host~entity-id</code>)</li>
+        <li>Ed25519 Device-ID &amp; Signed Host-Identity</li>
         <li>WebRTC idr-tunnel-v1 (TCP + UDP-style segments)</li>
-        <li>CLI (<code>idr</code>), Rust agent, optional https-relay (self-hosted or managed)</li>
+        <li>CLI (<code>idr</code>), Rust agent, optional https-relay</li>
         <li>Browser SDK &amp; Dart SDK (see <a href="/isv">ISV page</a>)</li>
       </ul>
 
-      <h2>FAQ</h2>
-      <p>Common billing questions are answered in the <a href="/faq#billing">FAQ</a>. API entitlements: <a href="/billing">billing reference</a>.</p>
+      <p>API reference: <a href="/billing">billing</a> · <a href="/docs/authorization">authorization</a> · <a href="/faq#billing">FAQ</a></p>
     </div>
   </section>
 </Layout>
@@ -90,4 +143,9 @@ import Footer from '../components/Footer.astro';
   h1 { font-size: 2.25rem; margin: 0 0 1rem; }
   h2 { font-size: 1.5rem; margin: 2.5rem 0 1rem; }
   ul { color: var(--text-muted); }
+  .compare-table__note {
+    margin: 0.75rem 0 0;
+    font-size: 0.9375rem;
+    color: var(--text-muted);
+  }
 </style>

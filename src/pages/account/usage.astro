@@ -1,0 +1,126 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+---
+
+<Layout title="Usage — idr.to">
+  <Header slot="header" />
+  <Footer slot="footer" />
+
+  <section class="section">
+    <div class="container">
+      <p class="eyebrow">Account</p>
+      <h1>Usage dashboard</h1>
+      <p class="lead">
+        Customer-facing view of pooled bundle quotas, monthly traffic, and utilization warnings.
+        Connect with a portal session token to load live data from <code>GET /v1/billing/status</code>.
+      </p>
+
+      <div id="usage-root" class="card" style="margin-top:1.5rem;padding:1.5rem;">
+        <p id="usage-status" style="color:var(--text-muted);">Sign in via the portal to load usage data.</p>
+        <div id="usage-content" hidden>
+          <h2 style="margin-top:0;">Purchased bundles</h2>
+          <ul id="bundle-list"></ul>
+
+          <h2>Quotas &amp; usage</h2>
+          <div class="table-wrap">
+            <table id="quota-table">
+              <thead>
+                <tr><th>Resource</th><th>Used</th><th>Quota</th><th>Status</th></tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+
+          <h2>Traffic this month</h2>
+          <ul id="traffic-list" style="color:var(--text-muted);"></ul>
+
+          <p id="invoice-estimate" style="font-weight:600;margin-top:1.5rem;"></p>
+        </div>
+      </div>
+
+      <p style="margin-top:1rem;">
+        <a href="/account/billing">Billing &amp; purchase more bundles →</a>
+      </p>
+    </div>
+  </section>
+
+  <script>
+    const API = import.meta.env.PUBLIC_API_URL || 'https://idr.to';
+    const token = localStorage.getItem('idr_portal_token');
+    const statusEl = document.getElementById('usage-status');
+    const contentEl = document.getElementById('usage-content');
+
+    function warnBadge(pct) {
+      if (pct >= 100) return '<span class="warn warn--100">100%</span>';
+      if (pct >= 90) return '<span class="warn warn--90">90%+</span>';
+      if (pct >= 70) return '<span class="warn warn--70">70%+</span>';
+      return '—';
+    }
+
+    function pct(used, quota) {
+      if (!quota) return 0;
+      return Math.floor((used / quota) * 100);
+    }
+
+    async function load() {
+      if (!token) return;
+      statusEl.textContent = 'Loading…';
+      try {
+        const res = await fetch(`${API}/v1/billing/status`, {
+          headers: { Authorization: `Bearer ${token}`, 'Accept-Version': '1' },
+        });
+        if (!res.ok) throw new Error(await res.text());
+        const data = await res.json();
+        statusEl.hidden = true;
+        contentEl.hidden = false;
+
+        const bundles = data.bundles || [];
+        document.getElementById('bundle-list').innerHTML = bundles.length
+          ? bundles.map((b) => `<li>${b.quantity}× ${b.bundle} (${b.status})</li>`).join('')
+          : '<li>No active bundles — <a href="/checkout?plan=personal">purchase a bundle</a></li>';
+
+        const q = data.quotas || {};
+        const u = data.usage || {};
+        const rows = [
+          ['Entity IDs', u.entity_ids, q.entity_id_quota],
+          ['Target devices', u.target_device_ids, q.target_device_id_quota],
+          ['Source devices', u.source_device_ids, q.source_device_id_quota],
+          ['P2P (GB)', (u.monthly_p2p_used_bytes / (1024 ** 3)).toFixed(2), (q.monthly_p2p_quota_bytes / (1024 ** 3)).toFixed(0)],
+        ];
+        const tbody = document.querySelector('#quota-table tbody');
+        tbody.innerHTML = rows.map(([name, used, quota]) => {
+          const p = pct(Number(used), Number(quota));
+          return `<tr><td>${name}</td><td>${used}</td><td>${quota}</td><td>${warnBadge(p)}</td></tr>`;
+        }).join('');
+
+        const relayGb = ((u.relay_bytes_used || 0) / (1024 ** 3)).toFixed(2);
+        document.getElementById('traffic-list').innerHTML = `
+          <li>P2P used: ${(u.monthly_p2p_used_bytes / (1024 ** 3)).toFixed(2)} GB (bundled allowance applies)</li>
+          <li>Relay used: ${relayGb} GB (billed separately)</li>
+        `;
+
+        if (data.warnings?.length) {
+          const w = data.warnings.map((x) => `${x.resource} at ${x.pct}%`).join(', ');
+          statusEl.hidden = false;
+          statusEl.textContent = `Warnings: ${w}`;
+          statusEl.style.color = 'var(--accent, #c60)';
+        }
+
+        document.getElementById('invoice-estimate').textContent =
+          `Estimated invoice this month: US$${(data.estimated_invoice_usd ?? 0).toFixed(2)}`;
+      } catch (e) {
+        statusEl.textContent = 'Could not load usage. Sign in via portal or check API URL.';
+      }
+    }
+    load();
+  </script>
+</Layout>
+
+<style>
+  .warn { font-size: 0.75rem; font-weight: 600; padding: 0.1rem 0.4rem; border-radius: 4px; }
+  .warn--70 { background: #fef3c7; color: #92400e; }
+  .warn--90 { background: #fed7aa; color: #9a3412; }
+  .warn--100 { background: #fecaca; color: #991b1b; }
+</style>

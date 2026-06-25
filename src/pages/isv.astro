@@ -56,7 +56,7 @@ await client.connect('idrto:laptop~user-40example.com/ssh');`;
       <h3>Detailed case study: Ollama on M4 Mac Mini</h3>
       <p>
         The full BYOM walkthrough covers Host-Identity registration, FQHN formats, CLI and Browser SDK access,
-        streaming <code>/api/chat</code>, RAG with embeddings, access keys for contractors, and fallback paths
+        streaming <code>/api/chat</code>, RAG with embeddings, teammate ACLs, and fallback paths
         (TURN / HTTPS relay). Inference and model weights never leave the customer's edge box.
       </p>
       <div class="table-wrap">
@@ -105,9 +105,9 @@ await client.connect('idrto:laptop~user-40example.com/ssh');`;
         <table>
           <thead><tr><th>Do</th><th>Don't</th></tr></thead>
           <tbody>
-            <tr><td>Use <code>mountAuthPanel()</code> / <code>&lt;idr-auth-panel&gt;</code></td><td>Build your own access-key input</td></tr>
+            <tr><td>Use <code>mountAuthPanel()</code> / <code>&lt;idr-auth-panel&gt;</code></td><td>Build your own password or token inputs</td></tr>
             <tr><td>Let users enter <code>host.entity.idr</code> or idrto URI</td><td>POST tokens to your backend</td></tr>
-            <tr><td>Hardcode service name at build time</td><td>Pass <code>accessKey</code> to <code>connect()</code></td></tr>
+            <tr><td>Hardcode service name at build time</td><td>Override platform URLs</td></tr>
             <tr><td>CSP: <code>connect-src https://idr.to wss://idr.to</code></td><td>Override platform URLs</td></tr>
           </tbody>
         </table>
@@ -116,10 +116,10 @@ await client.connect('idrto:laptop~user-40example.com/ssh');`;
       <h3>Framework examples</h3>
       <p>Vanilla, React, Vue, Svelte, and Angular Vite starters ship in the <a href="https://github.com/idrto/idr_browser_sdk">idr_browser_sdk</a> repo.</p>
 
-      <h3>Auth options</h3>
+      <h3>Auth</h3>
       <ul>
-        <li><strong>Account login</strong> — <code>POST /v1/auth/browser/login</code> (OIDC-style session)</li>
-        <li><strong>Access keys</strong> — owner-issued <code>idr_ak_…</code> for delegates; exchanged client-side only</li>
+        <li><strong>Account login</strong> — entity ID + password via SDK panel; registers this browser as a source device</li>
+        <li><strong>Resolve</strong> — Signed Host-Identity with proof of possession (<code>GET /v1/resolve/challenge</code>)</li>
       </ul>
 
       <h2>Dart SDK (mobile &amp; desktop)</h2>
