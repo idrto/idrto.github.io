@@ -5,15 +5,17 @@ title: Pricing model — idr.to
 
 # Pricing model
 
-idr.to sells **bundles** that include Entity-ID registrations, Target Device-ID registrations, Source Device-ID registrations, and bundled monthly P2P traffic.
+idr.to sells stackable **Personal** and **Enterprise** bundles. Each bundle includes one entity, one target agent license (by tier), and four source agent licenses (by tier).
 
-- **Personal Bundle**: $5/year — 1 entity, 1 target, 4 sources, 500 GB/month P2P
-- **Enterprise Bundle**: $50/year — 2 entities, 5 targets, 20 sources, 2 TB/month P2P
+- **Personal Bundle**: $5/year — 1 personal target, 4 personal sources
+- **Enterprise Bundle**: $25/year — 1 enterprise target, 4 enterprise sources
 
-Bundles stack: buying N bundles multiplies all included resources.
+Bundles stack: buying N bundles multiplies tier-specific targets and sources.
 
-**Relay traffic** (TURN + HTTPS mux) is never bundled and is billed separately (~10× P2P overage rate).
+**P2P WebRTC traffic** is unlimited with any active bundle.
 
-We do not charge separately for ACL rules, Signed Host-Identity documents (beyond source registrations), services, ports, or wildcard rules.
+**Relay traffic** (TURN + HTTPS mux) is billed separately at the relay metered rate.
+
+**Hybrid agents** consume a **target license only** (not a source license).
 
 [Full pricing page](/pricing) · [Usage dashboard](/account/usage)

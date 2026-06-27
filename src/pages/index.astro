@@ -230,29 +230,27 @@ import Footer from '../components/Footer.astro';
           <span class="badge">Personal</span>
           <p class="pricing-card__price">US$5 <span>/ year</span></p>
           <ul>
-            <li>Single-level host (e.g. <code>laptop~you@example.com</code>, <code>m4mini~you@example.com</code>)</li>
-            <li>Up to 5 devices per user</li>
-            <li>Signaling + P2P included</li>
-            <li>Data transfer bundles optional</li>
+            <li>Single-label host (e.g. <code>laptop</code>)</li>
+            <li>1 target + 4 source agents per bundle</li>
+            <li>Unlimited P2P included</li>
+            <li>Relay traffic metered separately</li>
           </ul>
           <a class="btn btn--primary" href="/checkout?plan=personal">Subscribe</a>
         </div>
         <div class="card pricing-card">
           <span class="badge">Enterprise</span>
-          <p class="pricing-card__price">US$50 <span>/ user / year</span></p>
-          <p style="margin:0;color:var(--text-muted);font-size:0.875rem;">or US$5 / user / month</p>
+          <p class="pricing-card__price">US$25 <span>/ year</span></p>
           <ul>
-            <li>Multi-level hosts (e.g. <code>db1.us-east.finance~corp.com</code>)</li>
-            <li>Up to 5 devices per user</li>
-            <li>Cross-entity ACLs, org delegation</li>
-            <li>Priority support</li>
+            <li>Multi-level hosts (e.g. <code>db1.us-east.finance</code>)</li>
+            <li>1 target + 4 source agents per bundle</li>
+            <li>Cross-entity ACLs, same-OU rules</li>
+            <li>Unlimited P2P; relay metered</li>
           </ul>
           <a class="btn btn--primary" href="/checkout?plan=enterprise">Subscribe</a>
         </div>
       </div>
       <p style="margin-top:1.25rem;color:var(--text-muted);">
-        Data transfer: <strong>US$10 per 500 GB</strong> bundle (TURN + HTTPS relay). Unused quota rolls over up to 12 months.
-        Without bundles, targets remain reachable on <strong>P2P only</strong>.
+        Relay traffic (TURN + HTTPS mux) is billed per GiB. P2P WebRTC is unlimited with an active bundle.
         <a href="/pricing">Full pricing →</a>
         · <a href="/pricing#compare">Personal vs Enterprise</a>
       </p>
